@@ -20,7 +20,7 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
 </header>
 
 <div class="win">
-  <span class="box-title">✦ 今日战果（A 轨收官）</span>
+  <span class="box-title">✦ 本课收获（A 轨收官）</span>
   ① 用前 10 课的积木搭出第一个 <strong>不可压 Navier-Stokes 求解器</strong>——腔流（lid-driven cavity）：盖子拖动、内部生旋涡；<br>
   ② 理解<strong>投影法（pressure-Poisson）</strong>：动量更新半步 + 压力泊松迭代半部，二者交替；<br>
   ③ 在 Step 12 体验周期边界与恒定驱动源项 $F$，把 0006 的周期边界、0009 的迭代法全串起来。
@@ -184,12 +184,12 @@ $$\text{u 方程} + F,\qquad \text{边界：}u(0)=u(2),\ v(0)=v(2),\ u,v=0\ @\ y
 <details class="quiz"><summary>Q5（费曼）· 你怎么跟别人解释"不可压流场里压力是怎么被算出来的"？</summary>
 <div class="a">参考表述：不可压就是"流不堆积"。速度在每一步算完后可能有一点散度（堆积），压力泊松方程会告诉你"该在每个地方施加多大的推挤"来把这点堆积抹掉；我们不知道压力本身，但通过解方程（用当前速度的散度作源）求出来它该是多少，这就是投影。</div></details>
 
-<h2>7 · 默写任务（第 2 遍，必做）+ A 轨收尾</h2>
+<h2>7 · 默写任务（必做）+ A 轨收尾</h2>
 
 <p>合上讲义，从零默写 Step 11 的三个函数（build_up_b / pressure_poisson / cavity_flow）——这一步比较长，允许你分 2~3 次完成，但<strong>每次必须跑出结果</strong>。跑通后，做 Step 12（改动量小，主要加 F 和周期）。</p>
 
 <div class="box">
-<span class="box-title">🎉 A 轨完成checklist</span>
+<span class="box-title">A 轨完成检查</span>
 □ 0002-0006 一维（对流/CFL/扩散/Burgers）<br>
 □ 0007-0010 二维（对流转扩散/二维Burgers/Laplace/Poisson/NS腔流与通道流）<br>
 □ 你现在手里有：一个能跑"手写FDM 解 NS"的 py 代码库——这是课程主线中"solver.py"的真实交付物。建议给它建 GitHub 仓库并写 README。

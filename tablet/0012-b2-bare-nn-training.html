@@ -269,7 +269,7 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
 </header>
 
 <div class="win">
-  <span class="box-title">✦ 今日战果</span>
+  <span class="box-title">✦ 本课收获</span>
   ① 在 PyTorch 里定义一个全连接网络（FCN）类，看懂 pytorch 的 `nn.Sequential`、`nn.Linear`、`Tanh`；<br>
   ② 写出一个最标准的训练循环（forward → loss → backward → optimizer.step），并跑通；<br>
   ③ 亲眼看到裸 NN 在 10 个训练点附近拟合完美、出区间乱猜——为 B4 里"物理救场"做铺垫。
@@ -413,9 +413,9 @@ for i in range(1000):                         # 训练 1000 步
 <details class="quiz"><summary>Q5（费曼）· 用一句话解释"插值 vs 外推"，并举出本课的实例。</summary>
 <div class="a">插值=在已知点之间做合理猜测；外推=在已知范围之外猜想。本课：网络在 10 个训练点之间拟得很好（插值 ✓），到 t&gt;0.4 处跟解析解脱节（外推 ✗）。PINN 的意义就是让外推也被物理救回来。</div></details>
 
-<h2>7 · 默写任务（第 2 遍，必做）</h2>
+<h2>7 · 默写任务（必做）</h2>
 
-<p>合上讲义，从零默写 FCN 类 + 训练循环（允许查 nn.Linear/Sequential 的签名，但逻辑必须自己写出）。跑通并让图中肉眼可见"数据区贴合、区外乱猜"。卡壳处=薄弱点，标错题。</p>
+<p>合上讲义，从零默写 FCN 类 + 训练循环（允许查 nn.Linear/Sequential 的签名，但逻辑必须自己写出）。跑通并让图中肉眼可见"数据区贴合、区外乱猜"。卡住处的回查即薄弱点。</p>
 
 <div class="box">
 <span class="box-title">◆ 一手来源</span>

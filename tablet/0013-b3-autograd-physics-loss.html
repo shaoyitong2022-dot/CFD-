@@ -269,7 +269,7 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
 </header>
 
 <div class="win">
-  <span class="box-title">✦ 今日战果（Phase B 的灵魂）</span>
+  <span class="box-title">✦ 本课收获（Phase B 核心）</span>
   ① 独立写出对 nn 输出求<strong>一阶、二阶导</strong>的 autograd 代码，并理解 `requires_grad_` 和 `create_graph=True` 的含义；<br>
   ② 把 $m\ddot{x}+\mu\dot{x}+kx$ 变成一行"残差"，并写出物理损失——<strong>这就是课程主线中的『熟练 autograd』的那几行</strong>；<br>
   ③ 用手算验证：当解恰好满足方程时，物理损失为 0。
@@ -405,9 +405,9 @@ for i in range(20000):
 <details class="quiz"><summary>Q5（费曼）· 向完全没学过 autograd 的同学解释 "create_graph"</summary>
 <div class="a">普通求导像"用一次就撕掉的草稿纸"；create_graph=True 相当于"把草稿纸也复印留底"，这样你还能在草稿纸（一阶导）上再求一次导。PINN 要二阶导，所以每一层都得留底。</div></details>
 
-<h2>7 · 默写任务（第 2 遍，必做）</h2>
+<h2>7 · 默写任务（必做）</h2>
 
-<p>合上讲义，从零默写 sin(x) 热身 + 官方物理损失五行（模型类可参考 B2 但也要默写）。卡壳处=薄弱点，标错题回来。<br><strong>本课是全 Phase B 的钥匙，宁可多花一小时也要把它写透。</strong></p>
+<p>合上讲义，从零默写 sin(x) 热身 + 官方物理损失五行（模型类可参考 B2 但也要默写）。卡住处的回查即薄弱点。<br><strong>本课是全 Phase B 的关键，值得多花时间写透。</strong></p>
 
 <div class="box">
 <span class="box-title">◆ 一手来源</span>

@@ -20,7 +20,7 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
 </header>
 
 <div class="win">
-  <span class="box-title">✦ 今日战果</span>
+  <span class="box-title">✦ 本课收获</span>
   ① 见识"椭圆型"问题：没有时间演化，靠<strong>迭代到收敛</strong>求稳态场（与前面的"时间推进"是两种世界观）；<br>
   ② 会用 <strong>L1 范数收敛判据</strong>做迭代停止条件，并首次把代码<strong>函数化</strong>（plot2D / laplace2d）；<br>
   ③ 给 Laplace 加一个源项 → Poisson。<strong>这是 Step 11 压力泊松方程的直通预告</strong>。
@@ -192,9 +192,9 @@ Step 10 的注释把 <code>y</code> 也 <code>linspace(xmin,xmax,ny)</code>（�
 <details class="quiz"><summary>Q5（费曼）· 为什么 Poisson 的迭代"越来越慢"？</summary>
 <div class="a">每次迭代把尖峰往四周摊一点、场越来越平。越平的地方，"这次和上次差多少"越小，L1 相对变化率越小，判断收敛的阈值越来越难达到——就像把水倒入山谷，越接近平衡水面变化越细微。</div></details>
 
-<h2>7 · 默写任务（第 2 遍，必做）</h2>
+<h2>7 · 默写任务（必做）</h2>
 
-<p>合上讲义，默写 <code>laplace2d</code>（含 plot2D、五点公式、边界、L1 判据），跑通 Laplace 后加源项改写成 Poisson。卡壳处=薄弱点，标记。</p>
+<p>合上讲义，默写 <code>laplace2d</code>（含 plot2D、五点公式、边界、L1 判据），跑通 Laplace 后加源项改写成 Poisson。卡住处的回查即薄弱点。</p>
 
 <div class="box">
 <span class="box-title">◆ 一手来源与衔接预告</span>

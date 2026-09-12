@@ -20,7 +20,7 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
 </header>
 
 <div class="win">
-  <span class="box-title">✦ 今日战果</span>
+  <span class="box-title">✦ 本课收获</span>
   ① 掌握二维网格的关键约定：<code>u[j, i]</code>（j=y、i=x）与三维绘图 <code>meshgrid + plot_surface</code>；<br>
   ② 把一维对流公式"平移"到二维（只多一项 $\partial_y$），并看到帽子在一个平面里被搬动；<br>
   ③ 对比两层 for 循环与<strong>数组运算（向量化）</strong>两种写法，为后面所有步奠定"少写循环"的习惯。
@@ -210,9 +210,9 @@ for n in range(nt + 1):
 <details class="quiz"><summary>Q5（费曼）· 向只知道一维数组的同学解释：为什么二维绘图需要 meshgrid？</summary>
 <div class="a">plot_surface 需要给每个数据点一个 (x, y) 坐标；meshgrid 把一维的 x 和 y 各复制成二维矩阵，行列交叉出整片网格坐标，plot_surface 才能知道每个 u[j,i] 该放在哪里。</div></details>
 
-<h2>7 · 默写任务（第 2 遍，必做）</h2>
+<h2>7 · 默写任务（必做）</h2>
 
-<p>合上讲义，默写 Step 5 的<strong>向量版</strong>（含 meshgrid 绘图），跑通后改写成 Step 6 的双场耦合版（可直接复制 u 方程结构改 v）。卡壳处标错题。</p>
+<p>合上讲义，默写 Step 5 的<strong>向量版</strong>（含 meshgrid 绘图），跑通后改写成 Step 6 的双场耦合版（可直接复制 u 方程结构改 v）。卡住的行建议回查。</p>
 
 <div class="box">
 <span class="box-title">◆ 补看官方 06_Array_Operations_with_NumPy.ipynb</span>

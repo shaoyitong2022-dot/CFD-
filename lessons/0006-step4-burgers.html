@@ -20,7 +20,7 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
 </header>
 
 <div class="win">
-  <span class="box-title">✦ 今日战果</span>
+  <span class="box-title">✦ 本课收获</span>
   ① 亲手解决"一维主线"的终极方程 Burgers 方程（非线性对流 + 扩散合体）——课程主线中的 Burgers 主线 FDM 基准在此刻诞生；<br>
   ② 学会用 <strong>Sympy 做符号微分</strong>，再 <code>lambdify</code> 成可调用函数（科研里超常用的"推导交给机器"套路）；<br>
   ③ 搞懂<strong>周期边界条件</strong>：右端出去的量从左边回来，以及它如何让"头痛"的边界在代码里露出马脚。
@@ -175,12 +175,12 @@ pyplot.legend()</code></pre>
 <details class="quiz"><summary>Q5（费曼）· 为什么把内层循环写成 range(0, nx) 会出错？</summary>
 <div class="a">因为更新公式要读 <code>un[i+1]</code>：i=nx-1 时下标越界。同时周期边界需要专门的 i=0/i-1 补写；把 range 写成 0..nx 既越界又没体现周期。边界是周期的事情，代码结构上要跟"内部点"分开处理。</div></details>
 
-<h2>6 · 默写任务（第 2 遍，必做）</h2>
+<h2>6 · 默写任务（必做）</h2>
 
 <div class="box">
-<span class="box-title">◆ 抄写三级跳 · 第 2 遍</span>
-合上讲义，新建空白 notebook 默写全部：Sympy 求导 + lambdify + 主循环 + 周期边界。跑通「计算 vs 解析」重合图。<strong>卡壳处=薄弱点，标记回来。</strong><br>
-<strong>第 3 遍（可选加分）</strong>：把求解器封装成 <code>def burgers(nx, nt, nu, sigma): ...</code> 并复用——迈向课程主线中的『solver.py』的第一步。
+<span class="box-title">写作练习：合卷默写</span>
+合上讲义，新建空白 notebook 默写全部：Sympy 求导 + lambdify + 主循环 + 周期边界。跑通「计算 vs 解析」重合图。<strong>卡住的行建议回查。</strong><br>
+<strong>拓展练习（可选）</strong>：把求解器封装成 <code>def burgers(nx, nt, nu, sigma): ...</code> 并复用——迈向课程主线中的『solver.py』的第一步。
 </div>
 
 <div class="box">

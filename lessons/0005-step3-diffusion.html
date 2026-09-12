@@ -20,7 +20,7 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
 </header>
 
 <div class="win">
-  <span class="box-title">✦ 今日战果</span>
+  <span class="box-title">✦ 本课收获</span>
   ① 学会二阶导数的中心差分格式（泰勒展开推导），并把它写进 FTCS 格式；<br>
   ② 亲眼看到帽子<strong>不移动、只扩散</strong>：尖锐边缘被抹平，最终趋于平直——这是扩散的物理签名；<br>
   ③ 认识扩散格式的稳定因子 $\sigma_d = \frac{\nu\Delta t}{\Delta x^2}\le \frac12$（和 CFL 的 σ 是两回事，别混）。
@@ -165,19 +165,19 @@ Step 3 读 <code>un[i-1]</code> 和 <code>un[i+1]</code> → 左右边界 i=0 �
 <details class="quiz"><summary>Q5（费曼）· 用不超过三句话向同学解释：为什么扩散的帽子不会移动，只会被抹掉？</summary>
 <div class="a">参考表述：对流有一个方向，所以帽子整体平移；扩散没有方向，二阶导只"看凹凸"——凸的地方往下塌、凹的地方被填，所有尖角都被摊平，而帽子整体的重心不动，所以它只是原地变矮变胖，最终变成平线。</div></details>
 
-<h2>7 · 默写任务（第 2 遍，必做）</h2>
+<h2>7 · 默写任务（必做）</h2>
 
 <div class="box">
-<span class="box-title">◆ 抄写三级跳 · 第 2 遍</span>
-合上讲义，完整默写 Step 3（含 `dt = sigma * dx**2 / nu` 与 `range(1, nx-1)`），跑通并确认帽子"原地抹平"。然后回答 Q3 的口算与实验 3 的观察。卡壳处标错题返回。<br>
-<strong>第 3 遍</strong>：改 <code>nu</code> 验证实验 2 预测；把 σ 调到 0.6 观察不稳定。
+<span class="box-title">写作练习：合卷默写</span>
+合上讲义，完整默写 Step 3（含 `dt = sigma * dx**2 / nu` 与 `range(1, nx-1)`），跑通并确认帽子"原地抹平"。然后回答 Q3 的口算与实验 3 的观察。卡住的行建议回查。<br>
+<strong>拓展练习</strong>：改 <code>nu</code> 验证实验 2 预测；把 σ 调到 0.6 观察不稳定。
 </div>
 
 <div class="box">
 <span class="box-title">◆ 一手来源</span>
 Barba &amp; Forsyth, <em>CFD Python</em>, Step 3：本地 <code>code\cfdpython-repo\lessons\04_Step_3.ipynb</code>。<br>
 官方配套视频：<strong>Video Lesson 4</strong>（Step 1–4，含二阶导中心差分拆解）：<a href="https://youtu.be/y2WaK7_iMRI">youtube</a>。<br>
-答疑：报错/现象贴给助教。
+遇到报错时，先复读本课"必做实验"的提示，再对比官方 notebook 定位差异。
 </div>
 
 <footer class="lesson-foot">

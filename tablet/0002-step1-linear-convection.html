@@ -269,7 +269,7 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
 </header>
 
 <div class="win">
-  <span class="box-title">✦ 今日战果（两个）</span>
+  <span class="box-title">✦ 本课收获（两个）</span>
   ① 亲手把人生第一个 PDE 离散成可在电脑上计算的公式，并用两层循环写成一个能跑的数值求解器；<br>
   ② 亲眼看到初始的"方帽"在传播中变形——并知道这是<strong>数值耗散</strong>在作祟（这是后面所有课的引子）。
 </div>
@@ -322,7 +322,7 @@ $$
 u_i^{n+1} = u_i^{n} - c\frac{\Delta t}{\Delta x}(u_i^{n} - u_{i-1}^{n})
 $$
 
-<p>解读：新值 $u_i^{n+1}$ = 旧值 $u_i^{n}$ −（搬运量）。搬运量正比于 $c$、正比于时间步 $\Delta t$、反比于网格 $\Delta x$，还正比于"我自己 − 左边邻居"的差值。数学推导这一步，对应你预习的"标准 b"：合上书，能独立从原方程推出这一行。</p>
+<p>解读：新值 $u_i^{n+1}$ = 旧值 $u_i^{n}$ −（搬运量）。搬运量正比于 $c$、正比于时间步 $\Delta t$、反比于网格 $\Delta x$，还正比于"我自己 − 左边邻居"的差值。数学推导这一步，验证标准：合上书，能独立从原方程推出这一行。</p>
 
 <div class="box">
 <span class="box-title">◆ 为什么空间差分要"向后取"，不一碗水端平？</span>
@@ -416,7 +416,7 @@ for n in range(nt):          # 外层循环：n = 0,1,...,24，共 25 个时间�
 
 <h2>4 · 三个必做实验（改参数，观察，解释）</h2>
 
-<p>每次改参数前，<strong>先合上笔记本，口头预测会发生什么</strong>，再运行验证——这是你的第 3 遍"变参数预测"。</p>
+<p>每次改参数前，<strong>先合上笔记本，口头预测会发生什么</strong>，再运行验证——这是"变参数预测"。</p>
 
 <h3>实验 1：加密网格 <code>nx=41 → 81</code></h3>
 <p>网格变密后帽子更细分。重点观察两点：<strong>帽子的水平位置有没有动</strong>（应该还在 $[0.5,1]$，因为切片用 <code>dx</code> 重新算了位置）和<strong>边缘的分辨率</strong>。同时留意：加密后物理的 $\Delta x$ 变小，但 $\Delta t$ 没变——这已经在悄悄改变一个叫 CFL 数的量，它决定了稳定性（0004 专章）。</p>
@@ -452,14 +452,14 @@ for n in range(nt):          # 外层循环：n = 0,1,...,24，共 25 个时间�
 <details class="quiz"><summary>Q6 · 预测实验：把 <code>dt</code> 从小调大（0.025→0.1），相同 <code>nx=41</code>，你预期图会怎样？</summary>
 <div class="a">预期：数值解开始振荡、出现锯齿，甚至最终发散成 NaN。因为 $c\Delta t$（0.1）超过了 $\Delta x$（0.05）能承受的信息传播范围，稳定性判据被打破——CFL 数 >1。若没预期到这一点，恰恰是这节课要补的认知盲区。</div></details>
 
-<h2>6 · 默写任务（第 2 遍，本课必做）</h2>
+<h2>6 · 默写任务（必做）</h2>
 
 <div class="box">
-<span class="box-title">◆ 抄写三级跳 · 第 2 遍</span>
-合上讲义与官方 notebook，<strong>打开新的空白 notebook，凭记忆把 3.1→3.5 全部代码从零敲一遍</strong>，跑通并让帽子和官方一致地往右挪。卡住的地方（记不起某行、忘了 <code>copy</code>）就是你没真懂的地方→把那一行标记为"错题"，回来对照讲义，写一句"我当时为什么错"。
+<span class="box-title">写作练习：合卷默写</span>
+合上讲义与官方 notebook，<strong>打开新的空白 notebook，凭记忆把 3.1→3.5 全部代码从零敲一遍</strong>，跑通并让帽子和官方一致地往右挪。记不住的地方（比如漏写 <code>copy</code>）正是应重点回看的节点，建议回到对应小节再读一遍。
 </div>
 
-<p>完成之后，做<a href="../reference/glossary.html">术语表</a>里的 <em>迎风 / 数值耗散 / 网格</em>三条的自查。回来告诉我：① 序号；② 实验 1–3 你各看到了什么（最好截图或描述差异）；③ 默写时卡在哪几行。</p>
+<p>完成之后，做<a href="../reference/glossary.html">术语表</a>里的 <em>迎风 / 数值耗散 / 网格</em>三条的自查。对照核对要点：① 默写是否与讲义一致；② 实验 1–3 的现象；③ 卡住的行建议重读对应小节。</p>
 
 <div class="box">
 <span class="box-title">◆ 一手来源（本课对齐）</span>
@@ -467,8 +467,8 @@ Barba &amp; Forsyth, <em>CFD Python</em>, Step 1：本地 <code>code\cfdpython-r
 </div>
 
 <div class="box">
-<span class="box-title">✉ 随时找助教</span>
-任何一步卡住、任何一题拿不准、图和预期长得不一样——直接把现象丢过来：报错全文、你改了什么参数、预期看到什么、实际看到什么。不猜谜。
+<span class="box-title">学习提示</span>
+如遇报错，先对照官方 notebook 逐行核对；仍无法定位时，记录报错全文与你修改的参数，再从实验步骤反查。
 </div>
 
 <footer class="lesson-foot">

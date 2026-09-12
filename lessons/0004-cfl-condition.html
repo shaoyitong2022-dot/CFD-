@@ -20,7 +20,7 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
 </header>
 
 <div class="win">
-  <span class="box-title">✦ 今日战果</span>
+  <span class="box-title">✦ 本课收获</span>
   ① 亲手触发一次"数值爆炸"，并理解它为什么发生——这是 CFD 学生必吃的一课；<br>
   ② 掌握 Courant 数 $\sigma=\frac{u\Delta t}{\Delta x}$ 与判据 $\sigma \le 1$，能当场口算并解释；<br>
   ③ 学会把 $\Delta t$ "绑"在 $\Delta x$ 上（官方推荐的稳定写法），让代码不会因参数组合而炸。
@@ -156,12 +156,12 @@ def linearconv(nx):
 <details class="quiz"><summary>Q5（费曼）· 向一个只会用 Mathematica 符号计算的同学解释：为什么显式时间推进有个"每步不超过一个网格"的速度极限？</summary>
 <div class="a">参考表述：电脑只能在网格点上取值，一次时间步之后，每个格点的新值只能由它"够得着"的邻居算出；波一个时间步走的路程若超过一个网格，就超出了这个点信息能到达的范围，数值解于是失去因果联系、开始乱震（不稳）。要稳，就得让波每步最多走一格，也就是 σ≤1。</div></details>
 
-<h2>6 · 默写任务（第 2 遍，必做）</h2>
+<h2>6 · 默写任务（必做）</h2>
 
 <div class="box">
-<span class="box-title">◆ 抄写三级跳 · 第 2 遍</span>
-合上讲义，从零默写 <code>linearconv(nx)</code>（含 `dt = sigma * dx` 修复版），跑 <code>41/61/81/101/121</code> 全部稳定。然后回答 Q2 的口算。卡壳的地方标错题。<br>
-<strong>额外一步（第 3 遍）</strong>：手动算一组合法的 ($nx, \sigma$) → 推导对应 ($dx, dt$)，再跑代码验证图不炸。
+<span class="box-title">写作练习：合卷默写</span>
+合上讲义，从零默写 <code>linearconv(nx)</code>（含 `dt = sigma * dx` 修复版），跑 <code>41/61/81/101/121</code> 全部稳定。然后回答 Q2 的口算。卡住的行建议回查。<br>
+<strong>拓展练习</strong>：手动算一组合法的 ($nx, \sigma$) → 推导对应 ($dx, dt$)，再跑代码验证图不炸。
 </div>
 
 <div class="box">

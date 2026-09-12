@@ -269,7 +269,7 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
 </header>
 
 <div class="win">
-  <span class="box-title">✦ 今日战果</span>
+  <span class="box-title">✦ 本课收获</span>
   ① 看懂并写对一个改动：把 Step 1 的常数波速 $c$ 换成解自身 $u$——这是 CFD 里从"线到非线"的临门一脚；<br>
   ② 亲眼观察到帽子在非线性下"迎风坡变陡"——一个小小的初始不平滑，会被方程自己放大成冲击波雏形。
 </div>
@@ -379,18 +379,18 @@ pyplot.plot(numpy.linspace(0, 2, nx), u)</code></pre>
 <details class="quiz"><summary>Q5 · 这一步的内层循环为什么仍从 i=1 开始、跳过 i=0？</summary>
 <div class="a">与 Step 1 同：公式需要 `un[i-1]`，i=0 时会访问 `un[-1]`（数组尾元素），产生错误的"左邻居"。跳过 i=0 等价于固定左边界格点的值。</div></details>
 
-<h2>6 · 默写任务（第 2 遍，必做）</h2>
+<h2>6 · 默写任务（必做）</h2>
 
 <div class="box">
-<span class="box-title">◆ 抄写三级跳 · 第 2 遍</span>
-合上讲义与官方 notebook，新建空白 notebook，<strong>先写 Step 1 全套再改出一行</strong>（这正是官方建议的复用法：代码复用是 CFD 家常便饭）。跑通后回答实验 2 的预测题（帽子何时变陡）。卡住的行标记为错题回查。
+<span class="box-title">写作练习：合卷默写</span>
+合上讲义与官方 notebook，新建空白 notebook，<strong>先写 Step 1 全套再改出一行</strong>（这正是官方建议的复用法：代码复用是 CFD 家常便饭）。跑通后回答实验 2 的预测题（帽子何时变陡）。卡住的行回查。
 </div>
 
 <div class="box">
 <span class="box-title">◆ 一手来源</span>
 Barba &amp; Forsyth, <em>CFD Python</em>, Step 2：本地 <code>code\cfdpython-repo\lessons\02_Step_2.ipynb</code>。<br>
 官方配套视频：<strong>Video Lesson 4</strong>（Step 1–4 离散化逐步拆解）：<a href="https://youtu.be/y2WaK7_iMRI">youtube</a>。<br>
-答疑：任何一行卡住，直接把报错贴给助教。
+任何一行卡住时，先对照官方 notebook 逐行核对，再尝试自己修。
 </div>
 
 <footer class="lesson-foot">

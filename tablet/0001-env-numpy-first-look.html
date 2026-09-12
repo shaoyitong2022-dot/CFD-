@@ -269,7 +269,7 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
 </header>
 
 <div class="win">
-  <span class="box-title">✦ 今日战果（三个，全部可验收）</span>
+  <span class="box-title">✦ 本课收获（三个）</span>
   ① 在自己机器上启动 Jupyter，跑起第一个 notebook；<br>
   ② 亲手打出你数值生涯的第一张图（三周期正弦波）；<br>
   ③ 亲眼见证向量化比 for 循环快约 100 倍——这是后面 12 个 step 的性能观地基。
@@ -398,12 +398,12 @@ print(f"speedup: {t_loop / t_vec:.0f}x")</code></pre>
 <div class="a">参考表述：循环从 Python 解释器搬进编译好的 C 代码里执行，且数组在内存中连续存放，CPU 可以一口气吞吐，省掉每一步的解释和类型检查。（说出"C 层执行"和"内存连续"两个要点即合格。）</div></details>
 
 <details class="quiz"><summary>Q5 · 费曼题：为什么规定你手打代码而不是复制粘贴？</summary>
-<div class="a">复制粘贴只锻炼 Ctrl 键，手打才经过工作记忆——每个变量名、每个参数都要你亲手过一遍，打错的地方正是你理解断裂的地方。这与你预习用的"标准 b"（合上书默写推导链）是同一套认知逻辑。</div></details>
+<div class="a">复制粘贴只锻炼 Ctrl 键，手打才经过工作记忆——每个变量名、每个参数都要你亲手过一遍，打错的地方正是你理解断裂的地方。这与"合上书默写推导链"的复习法属同一套认知逻辑。</div></details>
 
 <h2>7 · 收尾与下一课</h2>
 
 <p>三件事：</p>
-<p>① 保存 notebook（<kbd>Ctrl</kbd>+<kbd>S</kbd>）；② 关掉 notebook 页签时选 <strong>Save and Shutdown</strong>（终端里 Ctrl+C 可以关掉整个 Jupyter 服务）；③ 回来告诉助教：三个战果各是什么、自测五题错了哪题。</p>
+<p>① 保存 notebook（<kbd>Ctrl</kbd>+<kbd>S</kbd>）；② 关掉 notebook 页签时选 <strong>Save and Shutdown</strong>（终端里 Ctrl+C 可以关掉整个 Jupyter 服务）；③ 对照上面的自测题核对答案，把没把握的题目标记出来。</p>
 
 <p><strong>下一课 0002 · Step 1 一维线性对流</strong>——你将亲手离散人生第一个 PDE：$\frac{\partial u}{\partial t} + c\frac{\partial u}{\partial x} = 0$，用一个帽状函数当初始条件，看它以速度 $c$ 向右平移。今天学的 <code>linspace</code>、切片、<code>pyplot</code> 会全部原地复用。</p>
 
@@ -413,8 +413,8 @@ Barba &amp; Forsyth, <em>CFD Python</em>, Lesson 00 — Quick Python Intro。完
 </div>
 
 <div class="box">
-<span class="box-title">✉ 随时找助教</span>
-任何一步卡住、任何一题拿不准、图和预期长得不一样——直接把现象丢过来。报错贴全、说清"我预期看到什么、实际看到什么"，助教就是干这个的。
+<span class="box-title">学习提示</span>
+如遇报错，先对照官方 notebook 逐行核对；仍无法定位时，把报错信息与参数设置整理成文字再排查。
 </div>
 
 <footer class="lesson-foot">
