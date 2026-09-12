@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>0001 · 环境点火与 NumPy 第一次接触</title>
+<style>
+/* CFDPython 双轨课程共享样式表 —— 所有课页与参考页统一引用 */
+:root {
+  --ink: #1f2328;
+  --paper: #fffdf7;
+  --soft: #f6f4ec;
+  --accent: #0f6b6b;        /* 主强调：深青 */
+  --accent-2: #b3541e;      /* 次强调：赭橙 */
+  --line: #d8d2c2;
+  --code-bg: #f4f2ea;
+  --muted: #6e6a5e;
+  --serif: "Source Han Serif SC", "Noto Serif SC", "Songti SC", Georgia, serif;
+  --sans: "Source Han Sans SC", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --mono: "Cascadia Code", Consolas, "JetBrains Mono", monospace;
+}
+
+* { box-sizing: border-box; }
+
+html { font-size: 17px; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  line-height: 1.85;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 5rem;
+}
+
+/* ---------- 头部 ---------- */
+header.lesson-head {
+  border-bottom: 3px double var(--line);
+  padding-bottom: 1.2rem;
+  margin-bottom: 2.2rem;
+}
+.kicker {
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin: 0 0 0.5rem;
+}
+h1 {
+  font-size: 1.9rem;
+  line-height: 1.3;
+  margin: 0 0 0.6rem;
+  font-weight: 700;
+}
+.meta {
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.meta a { color: var(--accent); text-decoration: none; }
+.meta a:hover { text-decoration: underline; }
+
+/* ---------- 正文 ---------- */
+h2 {
+  font-size: 1.28rem;
+  margin: 2.6rem 0 0.9rem;
+  padding-left: 0.65rem;
+  border-left: 4px solid var(--accent);
+}
+h3 { font-size: 1.05rem; margin: 1.8rem 0 0.6rem; }
+
+p { margin: 0.9rem 0; }
+
+a { color: var(--accent); }
+a:hover { color: var(--accent-2); }
+
+strong { font-weight: 700; }
+
+/* ---------- 代码 ---------- */
+code {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  background: var(--code-bg);
+  padding: 0.12em 0.4em;
+  border-radius: 3px;
+  border: 1px solid var(--line);
+}
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 4px;
+  padding: 1rem 1.2rem;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.86rem;
+}
+.cm { color: #8a8577; font-style: italic; }      /* 代码注释色（教学用内联高亮） */
+
+/* ---------- 提示框 ---------- */
+.box {
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--accent-2);
+  background: var(--soft);
+  padding: 1rem 1.3rem;
+  margin: 1.6rem 0;
+  border-radius: 0 4px 4px 0;
+}
+.box .box-title {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  color: var(--accent-2);
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+/* ---------- 今日战果 ---------- */
+.win {
+  border: 2px solid var(--accent);
+  border-radius: 6px;
+  padding: 1.1rem 1.4rem;
+  margin: 1.8rem 0;
+  background: #f0f7f5;
+}
+.win .box-title { color: var(--accent); }
+
+/* ---------- 小测（检索练习） ---------- */
+details.quiz {
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: #fff;
+  margin: 1rem 0;
+  padding: 0;
+}
+details.quiz summary {
+  cursor: pointer;
+  font-family: var(--sans);
+  font-weight: 600;
+  padding: 0.8rem 1.1rem;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+details.quiz summary::before {
+  content: "▸";
+  color: var(--accent);
+  transition: transform 0.15s;
+}
+details.quiz[open] summary::before { transform: rotate(90deg); }
+details.quiz .a {
+  padding: 0.3rem 1.4rem 1rem;
+  border-top: 1px dashed var(--line);
+  color: #33413b;
+}
+details.quiz .a::before {
+  content: "答案";
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  color: var(--accent);
+  display: block;
+  margin-top: 0.6rem;
+}
+
+/* ---------- 术语表 ---------- */
+dl.gloss dt {
+  font-family: var(--sans);
+  font-weight: 700;
+  color: var(--accent);
+  margin-top: 1.1rem;
+}
+dl.gloss dt .en { font-weight: 400; color: var(--muted); font-size: 0.85em; }
+dl.gloss dd { margin: 0.2rem 0 0 0; }
+
+/* ---------- 表格 ---------- */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.4rem 0;
+  font-family: var(--sans);
+  font-size: 0.88rem;
+}
+th, td {
+  border: 1px solid var(--line);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+th { background: var(--soft); }
+tr:nth-child(even) td { background: #fbfaf4; }
+
+/* ---------- 页脚导航 ---------- */
+footer.lesson-foot {
+  margin-top: 3.5rem;
+  padding-top: 1.2rem;
+  border-top: 3px double var(--line);
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+footer.lesson-foot .nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+footer.lesson-foot a { color: var(--accent); text-decoration: none; }
+footer.lesson-foot a:hover { text-decoration: underline; }
+
+/* ---------- 平板 / 小屏适配 ---------- */
+@media (max-width: 820px) {
+  html { font-size: 16px; }
+  .page { padding: 1.5rem 1rem 3rem; }
+  h1 { font-size: 1.55rem; }
+  h2 { font-size: 1.15rem; }
+  pre {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    padding: 0.85rem 1rem;
+    -webkit-overflow-scrolling: touch;
+    overflow-x: auto;
+  }
+  code { word-break: break-word; }
+  /* 代码行内注释在窄屏不自动换行断在奇怪位置 */
+  pre code { white-space: pre; }
+  table { font-size: 0.8rem; }
+  th, td { padding: 0.4rem 0.5rem; }
+  .box, .win { padding: 0.9rem 1.1rem; }
+  footer.lesson-foot .nav { flex-direction: column; gap: 0.4rem; }
+}
+
+/* ---------- 打印 ---------- */
+@media print {
+  body { background: #fff; font-size: 11pt; }
+  .page { max-width: none; padding: 0; }
+  details.quiz { border: 1px solid #999; }
+  details.quiz .a { display: block !important; }
+  pre { background: #fff; }
+}
+
+</style>
+<script>
+MathJax = { tex: { inlineMath: [['$', '$']] } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+<div class="page">
+
+<header class="lesson-head">
+  <p class="kicker">Lesson 0001 · Phase A 前置课</p>
+  <h1>环境点火 · NumPy 第一次接触</h1>
+  <p class="meta">预计 30–45 分钟 ｜ <a href="../MISSION.md">Mission：手写数值基准 × 第一个 PINN</a> ｜ <a href="../reference/glossary.html">术语表</a></p>
+</header>
+
+<div class="win">
+  <span class="box-title">✦ 今日战果（三个，全部可验收）</span>
+  ① 在自己机器上启动 Jupyter，跑起第一个 notebook；<br>
+  ② 亲手打出你数值生涯的第一张图（三周期正弦波）；<br>
+  ③ 亲眼见证向量化比 for 循环快约 100 倍——这是后面 12 个 step 的性能观地基。
+</div>
+
+<h2>1 · 先安装环境（一次性准备）</h2>
+
+<p>本课程全部代码只需要 Python + 科学计算全家桶 + Jupyter。推荐用 <strong>Miniconda</strong> 一键装齐（跨平台、隔离干净）：</p>
+
+<pre><code># 装好后在终端执行（Windows 用 "Anaconda Prompt"，macOS/Linux 用普通终端）
+conda create -n cfd python=3.10
+conda activate cfd
+conda install -c conda-forge numpy matplotlib sympy scipy jupyter</code></pre>
+
+<p>也可直接用 <a href="https://www.anaconda.com/download">Anaconda Distribution</a>（自带 Python + Jupyter，图形化安装，最省事）。四个库一个都不能少：</p>
+
+<table>
+  <tr><th>依赖</th><th>用途</th></tr>
+  <tr><td>numpy / matplotlib</td><td>数值数组 + 绘图（A 轨全部 step）</td></tr>
+  <tr><td>sympy / scipy</td><td>符号微分（Step 4）与科学计算</td></tr>
+  <tr><td>jupyter</td><td>交互式 notebook 环境</td></tr>
+</table>
+
+<p>安装完成后，在终端跑 <code>jupyter notebook</code> 能打开浏览器页面即成功。本课程不依赖 torch/深度框架（那是后续 B/C 轨的事，届时另装 PyTorch）。</p>
+
+<h2>2 · 点火：启动 Jupyter</h2>
+
+<p>进入课程目录，启动笔记环境（<strong>手打，不要复制</strong>——第一节课就开始建立命令的肌肉记忆）：</p>
+
+<pre><code>cd /path/to/CFDPython-course/code     # 换成你实际解压/克隆的位置
+jupyter notebook</code></pre>
+
+<p>浏览器会自动打开 Jupyter 首页，地址形如 <code>http://localhost:8888/tree</code>。若没自动弹出，把终端里那条带 token 的链接手动粘到浏览器即可。</p>
+
+<div class="box">
+<span class="box-title">◆ 备选路径：用 PyCharm 跑 notebook（完全等价）</span>
+偏好 IDE 的话：PyCharm 打开 <code>code\</code> 作为项目根目录 → <code>Settings → Project → Python Interpreter</code> 选你刚建的 <code>cfd</code> 环境 → 打开任意 <code>.ipynb</code>，右上角服务器选 Managed Server + 该解释器，图内嵌渲染。自检：跑 <code>import numpy; print(numpy.__version__)</code> 正常即接对环境。（若 notebook 只能看不能跑，那是 Community 版限制——学生邮箱可免费换 Professional，或直接用上面的浏览器方案。）</div>
+
+<p>右上角 <strong>New → Python 3</strong>（ipykernel）新建 notebook，重命名为 <code>00_numpy_warmup.ipynb</code>。以后每个 step 一个新 notebook，命名格式 <code>stepXX_主题.ipynb</code>——这是 CFDPython 作者的原话建议：<em>"start each lesson with a fresh new notebook, and follow along, typing each line of code (don't copy-and-paste!)"</em>。</p>
+
+<h2>3 · 第一个 notebook：认识数组</h2>
+
+<p>在单元格里逐行输入并 <kbd>Shift</kbd>+<kbd>Enter</kbd> 运行。重点体会三个动作：<strong>造数组、切片、整体运算</strong>。</p>
+
+<pre><code>import numpy as np                    # the only library you need today
+
+x = np.linspace(0, 1, 5)             # 5 points, CLOSED interval: endpoints included
+print(x)                             # [0.   0.25 0.5  0.75 1.  ]
+print(x.shape)                       # (5,)  -- a 1D array</code></pre>
+
+<pre><code># slicing: start : stop : step  (stop is EXCLUDED)
+a = np.arange(0, 10)                 # [0 1 2 3 4 5 6 7 8 9]
+print(a[0:200:20])                   # indices 0,20,40,...  -- clipped to [0 2 4 6 8]
+print(a[::-1])                        # reversed</code></pre>
+
+<pre><code># element-wise operations on the WHOLE array at once
+print(x ** 2)                        # every element squared
+print(np.sin(x))                     # sine of every element
+print(x + 10)                        # no for-loop needed, ever</code></pre>
+
+<div class="box">
+<span class="box-title">◆ 为什么切片值得单独一课讲</span>
+B 轨 PINN notebook 里挑训练数据只用了 <code>x[0:200:20]</code> 十个字符——一维数组 500 个点、每隔 20 个取一个、只取前 200 个。今天弄懂切片语法，到时候就不会在"训练数据到底长什么样"上浪费一分钟。
+</div>
+
+<h2>4 · 你的第一张数值图</h2>
+
+<pre><code>import matplotlib.pyplot as plt
+
+t = np.linspace(0, 1, 200)           # 200 sample points on [0,1]
+y = np.sin(2 * np.pi * 3 * t)        # 3 Hz sine -- about 3 periods
+
+plt.figure(figsize=(8, 3))
+plt.plot(t, y)
+plt.xlabel("t")
+plt.ylabel("sin(2*pi*3*t)")
+plt.title("My first numerical plot")
+plt.show()</code></pre>
+
+<p>改一个参数再跑：把频率 <code>3</code> 改成 <code>30</code>，观察图形发生了什么——采样点数不变、信号变快了，波峰开始"削顶"变形。恭喜，你刚刚目睹了<strong>采样不足</strong>（aliasing 的雏形）：这是"网格密度跟不上物理变化"的第一次露脸。CFD 里同一个现象换个名字叫"网格分辨率不足"，Step 1 的 CFL 条件治的就是它的亲戚。</p>
+
+<h2>5 · 向量化 vs 循环：跑个 100 倍出来</h2>
+
+<p>同一个加法，两种写法。新建一个单元格，完整跑一遍（约需几秒）：</p>
+
+<pre><code>import time
+
+n = 1_000_000
+a = np.random.rand(n)
+b = np.random.rand(n)
+
+# --- the Python-loop way ---
+c_loop = np.empty(n)
+t0 = time.perf_counter()
+for i in range(n):
+    c_loop[i] = a[i] + b[i]
+t_loop = time.perf_counter() - t0
+
+# --- the vectorized way ---
+t0 = time.perf_counter()
+c_vec = a + b
+t_vec = time.perf_counter() - t0
+
+print(f"loop : {t_loop:.3f} s")
+print(f"vec  : {t_vec:.4f} s")
+print(f"speedup: {t_loop / t_vec:.0f}x")</code></pre>
+
+<p>典型结果：循环约 0.3–0.5 秒，向量化约 0.002 秒，加速 100–200 倍。原因一句话：<code>a + b</code> 的循环发生在编译好的 C 代码里、内存连续访问；Python 的 <code>for</code> 每一圈都解释执行、每次下标都单独查一次类型。</p>
+
+<p>CFDPython 的教学设计正是围绕这一点：前几个 step 用两层 <code>for</code> 循环把差分逻辑写得明明白白（概念优先），之后专门有一课 NumPy Array Operations 把所有求解器向量化重写（性能优先）。今天你提前把性能观立起来了，到时候只换写法、不换物理。</p>
+
+<h2>6 · 检查点：闭卷自测</h2>
+
+<p>全部做完后，<strong>合上 notebook</strong>，口头或纸上回答，再点开核对。</p>
+
+<details class="quiz"><summary>Q1 · <code>np.linspace(0, 1, 5)</code> 生成几个点？首尾分别是多少？</summary>
+<div class="a">5 个点，闭区间含两端：从 0.0 到 1.0，间隔 0.25。对比：<code>np.arange(0, 1, 0.25)</code> 只到 0.75（左闭右开）。做网格时这个区别必须门儿清。</div></details>
+
+<details class="quiz"><summary>Q2 · <code>x[0:200:20]</code>（x 有 500 个点）取出的下标序列是什么？共几个点？</summary>
+<div class="a">下标 0, 20, 40, 60, 80, 100, 120, 140, 160, 180——共 10 个点（200/20），且 200 本身取不到。这正是 B 轨 PINN 挑 10 个训练点的那行代码。</div></details>
+
+<details class="quiz"><summary>Q3 · 把频率从 3 改成 30 后，为什么波峰削顶变形？</summary>
+<div class="a">采样点数（200）没变而信号周期变快 10 倍，每周期分到的采样点从约 67 个掉到约 7 个，网格分辨率跟不上物理变化速度——采样不足。CFD 的对应物：网格太粗 / 时间步与波的传播速度不匹配（CFL 要管的事）。</div></details>
+
+<details class="quiz"><summary>Q4 · 一句话向只会纸笔推导的物理同学解释：向量化为什么快？</summary>
+<div class="a">参考表述：循环从 Python 解释器搬进编译好的 C 代码里执行，且数组在内存中连续存放，CPU 可以一口气吞吐，省掉每一步的解释和类型检查。（说出"C 层执行"和"内存连续"两个要点即合格。）</div></details>
+
+<details class="quiz"><summary>Q5 · 费曼题：为什么规定你手打代码而不是复制粘贴？</summary>
+<div class="a">复制粘贴只锻炼 Ctrl 键，手打才经过工作记忆——每个变量名、每个参数都要你亲手过一遍，打错的地方正是你理解断裂的地方。这与你预习用的"标准 b"（合上书默写推导链）是同一套认知逻辑。</div></details>
+
+<h2>7 · 收尾与下一课</h2>
+
+<p>三件事：</p>
+<p>① 保存 notebook（<kbd>Ctrl</kbd>+<kbd>S</kbd>）；② 关掉 notebook 页签时选 <strong>Save and Shutdown</strong>（终端里 Ctrl+C 可以关掉整个 Jupyter 服务）；③ 回来告诉助教：三个战果各是什么、自测五题错了哪题。</p>
+
+<p><strong>下一课 0002 · Step 1 一维线性对流</strong>——你将亲手离散人生第一个 PDE：$\frac{\partial u}{\partial t} + c\frac{\partial u}{\partial x} = 0$，用一个帽状函数当初始条件，看它以速度 $c$ 向右平移。今天学的 <code>linspace</code>、切片、<code>pyplot</code> 会全部原地复用。</p>
+
+<div class="box">
+<span class="box-title">◆ 一手来源（本课对齐的原始材料）</span>
+Barba &amp; Forsyth, <em>CFD Python</em>, Lesson 00 — Quick Python Intro。完整课程在<b>本仓库</b>的 <code>code\cfdpython-repo\lessons\00_Quick_Python_Intro.ipynb</code>（Jupyter 里直接打开，不用联网）；在线版备胎：<a href="https://nbviewer.jupyter.org/github/barbagroup/CFDPython/blob/master/lessons/00_Quick_Python_Intro.ipynb">nbviewer</a>。本课是其浓缩 + 中文讲解的定制。学有余力可通读原版做对照。
+</div>
+
+<div class="box">
+<span class="box-title">✉ 随时找助教</span>
+任何一步卡住、任何一题拿不准、图和预期长得不一样——直接把现象丢过来。报错贴全、说清"我预期看到什么、实际看到什么"，助教就是干这个的。
+</div>
+
+<footer class="lesson-foot">
+  <div class="nav">
+    <span><a href="../reference/glossary.html">术语表</a></span>
+    <span><a href="../RESOURCES.md">课程资源清单</a></span>
+    <span>下一课：0002 · Step 1 线性对流（待生成）</span>
+  </div>
+  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0001 课 · 2026-09-09</p>
+</footer>
+
+</div>
+</body>
+</html>

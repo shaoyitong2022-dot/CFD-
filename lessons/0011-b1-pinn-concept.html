@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>0011 · B1 谐振子 PINN 概念课</title>
+<link rel="stylesheet" href="../assets/course.css">
+<script>
+MathJax = { tex: { inlineMath: [['$', '$']] } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+<div class="page">
+
+<header class="lesson-head">
+  <p class="kicker">Lesson 0011 · Phase B 第 1 课 · PINN 入门</p>
+  <h1>B1 · 谐振子 PINN：为什么要让神经网络"懂物理"</h1>
+  <p class="meta">预计 40 分钟（概念课，几乎没有代码）｜ 教材：<a href="https://benmoseley.blog/my-research/so-what-is-a-physics-informed-neural-network/">Moseley, So, what is a physics-informed neural network?</a> ｜ <a href="../reference/glossary.html">术语表</a></p>
+</header>
+
+<div class="win">
+  <span class="box-title">✦ 今日战果</span>
+  ① 用自己的话讲清<strong>为什么裸神经网络出不了插值区就乱猜</strong>——并认识"归纳偏置"一词；<br>
+  ② 手推阻尼谐振子的方程与解析解，理解"欠阻尼"派生物理量（δ、ω₀、ω）；<br>
+  ③ 看懂 PINN 的损失函数 = 数据损失 + 物理损失，并预判"数据不足时哪个项救场"。
+</div>
+
+<h2>1 · 从"你的 Burgers 基准"说起：另一条路</h2>
+
+<p>你在 A 轨已经知道：解微分方程的传统路数是 FDM（离散网格、迭代推进）。这里要认识另一条路——<strong>把解"假装成一个神经网络"，让方程本身当老师去训练它</strong>。这就是 PINN（Physics-Informed Neural Network，Raissi et al. 2019）。</p>
+
+<p>为什么有人要这么干？因为传统求解器在某些任务上有短板：要反演方程里的未知参数、拟合严重缺失的观测数据、以及在超曲面上做代理模型。PINN 的价值不是替代 FDM 求解（那它多数时候慢），而是<strong>打开"数据 + 方程"协同的新地图</strong>。Moseley 这篇博客用最小的例子帮你建立感觉——一个阻尼谐振子。</p>
+
+<h2>2 · 平凡神经网络的问题：只会插值</h2>
+
+<p>想象你拿到一串实验数据，只知道它大概来自某个未知物理过程。最朴素的机器学习思路：造一个神经网络，输入时间 t，输出 u(t)，用数据拟合。</p>
+
+$$
+\text{loss}_{\text{data}} = \frac{1}{N}\sum_{i=1}^{N}(u_{\text{NN}}(t_i)-u_{\text{data}}(t_i))^2
+$$
+
+<p>这样训练出来的网络，在你喂过的数据点附近很美，<strong>一旦离开数据覆盖区间，就纯靠"蒙"</strong>。为什么？因为它只学了一个"在这几个点上输出这些值"的映射，没有学过任何"振荡应该按什么规律演化"的知识——没有归纳偏置（inductive bias）约束它的取值。</p>
+
+<div class="box">
+<span class="box-title">◆ 我手写 FDM 求解器和"裸 NN 拟合"的对照（你已有直觉）</span>
+FDM 是把"物理方程"硬编码进每个格点的更新公式——所以它"天生懂物理"，外推（推进更长时间）也稳。<br>
+裸 NN 是纯数据拟合——只在数据附近可信，等于一个"查表器"的平滑版。<br>
+<strong>PINN 的野心：既要数据的贴合，又要把物理方程写进损失里当约束。</strong>这就是你来这里学的点。
+</div>
+
+<h2>3 · 阻尼谐振子：本阶段的小世界</h2>
+
+<p>物理：有阻尼的弹簧-质量系统。</p>
+
+$$
+m\frac{d^2x}{dt^2}+\mu\frac{dx}{dt}+kx=0,\qquad x(0)=1,\quad \frac{dx}{dt}(0)=0
+$$
+
+<p>定义两个标准参数（阻尼比与自然频率）：</p>
+
+$$
+\delta=\frac{\mu}{2m},\qquad \omega_0=\sqrt{\frac{k}{m}}
+$$
+
+<p>欠阻尼（$\delta<\omega_0$）时解析解：</p>
+
+$$
+x(t)=e^{-\delta t}\,(2A\cos(\phi+\omega t)),\qquad \omega=\sqrt{\omega_0^2-\delta^2}
+$$
+
+<p>这个解析解是"标准答案"，既用来生成训练数据，也用来事后检验 PINN 对错。Moseley 用 $\delta=2,\ \omega_0=20$，所以 $\omega=\sqrt{400-4}\approx 19.9$：<strong>在 t∈[0,1] 里约 3 个完整周期</strong>。</p>
+
+<div class="box">
+<span class="box-title">◆ 为什么选谐振子做第一个 PINN，而不是直接上 Burgers</span>
+① 一阶 ODE/PDE 里的最简单非线性；② 只有一个时间自变量（无空间网格）；③ 有解析解当裁判；④ 纯 PyTorch 几十行。官方顺序同理：先学会"把微分方程残差加进损失"，再给 2D 问题加维度。你 A 轨的 Burgers FDM 基准，是以后验证"PINN 解 Burgers 准不准"的对照组。
+</div>
+
+<h2>4 · 数据饥饿与解析解：本课的"实验设计"</h2>
+
+<p>Moseley 刻意只给<strong>10 个训练点</strong>，且集中在 t∈[0, 0.4]（第一个周期的开头）：</p>
+
+<ul>
+  <li>数据点 = 从解析解的 LHS 采样，`x_data = x[0:200:20]`（10 个点，覆盖约 0.4 个周期）；</li>
+  <li>物理采样点 = 全域 30 个均匀点，只算残差、不给答案；</li>
+  <li>任务：网络要"猜"出剩余 2.6 个周期怎么振荡，解析解就是考卷。</li>
+</ul>
+
+<p>裸 NN 拿到这 10 个点只会在附近插值，出区间乱跑；PINN 因为有方程约束，天然知道"这是衰减振荡"。</p>
+
+<h2>5 · 检查点：闭卷自测</h2>
+
+<details class="quiz"><summary>Q1 · 写出阻尼谐振子方程；欠阻尼的解析解长什么样？</summary>
+<div class="a">$m\ddot{x}+\mu\dot{x}+kx=0$；欠阻尼解 $x(t)=e^{-\delta t}(2A\cos(\phi+\omega t))$——指数衰减包络 × 余弦振荡。ω=√(ω₀²−δ²)，δ<ω₀。</div></details>
+
+<details class="quiz"><summary>Q2 · 为什么裸神经网络一出数据区就"乱猜"？</summary>
+<div class="a">它只学习了"这些输入→这些输出"的映射，没有把物理规律（微分方程）编入学习目标/结构（没有归纳偏置），所以在没见过的输入上，任何输出都不违反它的训练损失，于是出现任意猜测。</div></details>
+
+<details class="quiz"><summary>Q3 · PINN 的损失函数由哪两部分组成？各自约束什么？</summary>
+<div class="a">数据损失：约束网络在观测点的值贴近数据（监督信号）；物理损失：让网络输出代入方程后残差≈0（物理约束）。合力让网络"既贴数据、又懂物理"。</div></details>
+
+<details class="quiz"><summary>Q4 · δ=2、ω₀=20，在 t∈[0,1] 里大概几个周期？</summary>
+<div class="a">ω=√(400-4)≈19.9，周期 2π/ω≈0.316；1/0.316≈3.2，约 3 个周期。这正是"给 0.4 周期数据、要你外推到 3 个周期"的难度设计。</div></details>
+
+<details class="quiz"><summary>Q5（费曼）· 一句话向同学解释：PINN 和普通神经网络的差别。</summary>
+<div class="a">普通 NN：学"输入→输出"映射；PINN：损失里多惩罚了"代入物理方程后的残差"，所以它学出来的函数必须同时贴数据、又服从方程——等于给神经网络装上了物理的"世界观"。</div></details>
+
+<h2>6 · 本课作业</h2>
+
+<p><strong>必做</strong>：读 Moseley 博客（上方链接）全篇，重点看"Fig 4: schematic of a physics-informed neural network"和结论。然后合上页面，用自己话写 3 行"什么是 PINN"（写给学期末回顾的自己看）。</p>
+
+<p><strong>选做（强化手感）</strong>：用纸笔验证一次 δ=2、ω₀=20 时 $\omega=\sqrt{400-4}\approx 19.9$、A 和 φ 的推导（Moseley 用 $\phi=\arctan(-d/w)$、$A=1/(2\cos\phi)$），把它对照你学校学的常微分——这就是"解析解工程化"。</p>
+
+<div class="box">
+<span class="box-title">◆ 一手来源与文献坐标</span>
+Moseley 博客：<a href="https://benmoseley.blog/my-research/so-what-is-a-physics-informed-neural-network/">So, what is a physics-informed neural network?</a><br>
+PINN 开山论文（认识一下，以后套磁用得着）：<a href="https://www.sciencedirect.com/science/article/pii/S0021999118307125">Raissi, Perdikaris &amp; Karniadakis, JCP 2019</a>。
+</div>
+
+<footer class="lesson-foot">
+  <div class="nav">
+    <span><a href="0010-step11-12-ns-cavity-channel.html">← 0010 A轨收官</a></span>
+    <span><a href="../reference/glossary.html">术语表</a></span>
+    <span>下一课：0012 · B2 裸 NN 与训练循环</span>
+  </div>
+  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0011 课 · 2026-09-11</p>
+</footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>0003 · Step 2 非线性对流</title>
+<style>
+/* CFDPython 双轨课程共享样式表 —— 所有课页与参考页统一引用 */
+:root {
+  --ink: #1f2328;
+  --paper: #fffdf7;
+  --soft: #f6f4ec;
+  --accent: #0f6b6b;        /* 主强调：深青 */
+  --accent-2: #b3541e;      /* 次强调：赭橙 */
+  --line: #d8d2c2;
+  --code-bg: #f4f2ea;
+  --muted: #6e6a5e;
+  --serif: "Source Han Serif SC", "Noto Serif SC", "Songti SC", Georgia, serif;
+  --sans: "Source Han Sans SC", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --mono: "Cascadia Code", Consolas, "JetBrains Mono", monospace;
+}
+
+* { box-sizing: border-box; }
+
+html { font-size: 17px; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  line-height: 1.85;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 5rem;
+}
+
+/* ---------- 头部 ---------- */
+header.lesson-head {
+  border-bottom: 3px double var(--line);
+  padding-bottom: 1.2rem;
+  margin-bottom: 2.2rem;
+}
+.kicker {
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin: 0 0 0.5rem;
+}
+h1 {
+  font-size: 1.9rem;
+  line-height: 1.3;
+  margin: 0 0 0.6rem;
+  font-weight: 700;
+}
+.meta {
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.meta a { color: var(--accent); text-decoration: none; }
+.meta a:hover { text-decoration: underline; }
+
+/* ---------- 正文 ---------- */
+h2 {
+  font-size: 1.28rem;
+  margin: 2.6rem 0 0.9rem;
+  padding-left: 0.65rem;
+  border-left: 4px solid var(--accent);
+}
+h3 { font-size: 1.05rem; margin: 1.8rem 0 0.6rem; }
+
+p { margin: 0.9rem 0; }
+
+a { color: var(--accent); }
+a:hover { color: var(--accent-2); }
+
+strong { font-weight: 700; }
+
+/* ---------- 代码 ---------- */
+code {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  background: var(--code-bg);
+  padding: 0.12em 0.4em;
+  border-radius: 3px;
+  border: 1px solid var(--line);
+}
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 4px;
+  padding: 1rem 1.2rem;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.86rem;
+}
+.cm { color: #8a8577; font-style: italic; }      /* 代码注释色（教学用内联高亮） */
+
+/* ---------- 提示框 ---------- */
+.box {
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--accent-2);
+  background: var(--soft);
+  padding: 1rem 1.3rem;
+  margin: 1.6rem 0;
+  border-radius: 0 4px 4px 0;
+}
+.box .box-title {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  color: var(--accent-2);
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+/* ---------- 今日战果 ---------- */
+.win {
+  border: 2px solid var(--accent);
+  border-radius: 6px;
+  padding: 1.1rem 1.4rem;
+  margin: 1.8rem 0;
+  background: #f0f7f5;
+}
+.win .box-title { color: var(--accent); }
+
+/* ---------- 小测（检索练习） ---------- */
+details.quiz {
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: #fff;
+  margin: 1rem 0;
+  padding: 0;
+}
+details.quiz summary {
+  cursor: pointer;
+  font-family: var(--sans);
+  font-weight: 600;
+  padding: 0.8rem 1.1rem;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+details.quiz summary::before {
+  content: "▸";
+  color: var(--accent);
+  transition: transform 0.15s;
+}
+details.quiz[open] summary::before { transform: rotate(90deg); }
+details.quiz .a {
+  padding: 0.3rem 1.4rem 1rem;
+  border-top: 1px dashed var(--line);
+  color: #33413b;
+}
+details.quiz .a::before {
+  content: "答案";
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  color: var(--accent);
+  display: block;
+  margin-top: 0.6rem;
+}
+
+/* ---------- 术语表 ---------- */
+dl.gloss dt {
+  font-family: var(--sans);
+  font-weight: 700;
+  color: var(--accent);
+  margin-top: 1.1rem;
+}
+dl.gloss dt .en { font-weight: 400; color: var(--muted); font-size: 0.85em; }
+dl.gloss dd { margin: 0.2rem 0 0 0; }
+
+/* ---------- 表格 ---------- */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.4rem 0;
+  font-family: var(--sans);
+  font-size: 0.88rem;
+}
+th, td {
+  border: 1px solid var(--line);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+th { background: var(--soft); }
+tr:nth-child(even) td { background: #fbfaf4; }
+
+/* ---------- 页脚导航 ---------- */
+footer.lesson-foot {
+  margin-top: 3.5rem;
+  padding-top: 1.2rem;
+  border-top: 3px double var(--line);
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+footer.lesson-foot .nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+footer.lesson-foot a { color: var(--accent); text-decoration: none; }
+footer.lesson-foot a:hover { text-decoration: underline; }
+
+/* ---------- 平板 / 小屏适配 ---------- */
+@media (max-width: 820px) {
+  html { font-size: 16px; }
+  .page { padding: 1.5rem 1rem 3rem; }
+  h1 { font-size: 1.55rem; }
+  h2 { font-size: 1.15rem; }
+  pre {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    padding: 0.85rem 1rem;
+    -webkit-overflow-scrolling: touch;
+    overflow-x: auto;
+  }
+  code { word-break: break-word; }
+  /* 代码行内注释在窄屏不自动换行断在奇怪位置 */
+  pre code { white-space: pre; }
+  table { font-size: 0.8rem; }
+  th, td { padding: 0.4rem 0.5rem; }
+  .box, .win { padding: 0.9rem 1.1rem; }
+  footer.lesson-foot .nav { flex-direction: column; gap: 0.4rem; }
+}
+
+/* ---------- 打印 ---------- */
+@media print {
+  body { background: #fff; font-size: 11pt; }
+  .page { max-width: none; padding: 0; }
+  details.quiz { border: 1px solid #999; }
+  details.quiz .a { display: block !important; }
+  pre { background: #fff; }
+}
+
+</style>
+<script>
+MathJax = { tex: { inlineMath: [['$', '$']] } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+<div class="page">
+
+<header class="lesson-head">
+  <p class="kicker">Lesson 0003 · Phase A 第 2 课</p>
+  <h1>Step 2 · 非线性对流：当速度开始"自我驱动"</h1>
+  <p class="meta">预计 30–40 分钟 ｜ 教材：<code>code\cfdpython-repo\lessons\02_Step_2.ipynb</code> ｜ <a href="0002-step1-linear-convection.html">← 先完成 0002</a> ｜ <a href="../reference/glossary.html">术语表</a></p>
+</header>
+
+<div class="win">
+  <span class="box-title">✦ 今日战果</span>
+  ① 看懂并写对一个改动：把 Step 1 的常数波速 $c$ 换成解自身 $u$——这是 CFD 里从"线到非线"的临门一脚；<br>
+  ② 亲眼观察到帽子在非线性下"迎风坡变陡"——一个小小的初始不平滑，会被方程自己放大成冲击波雏形。
+</div>
+
+<h2>1 · 这一课到底改了什么</h2>
+
+<p>上节课你解的是线性对流：波以恒定速度 $c$ 平移，形状不变。这节课方程变成：</p>
+
+$$
+\frac{\partial u}{\partial t} + u\frac{\partial u}{\partial x} = 0
+$$
+
+<p>唯一的改动：原来乘 $\partial_x u$ 的常数 $c$，现在换成了解本身 $u$。意思瞬间就不一样了：</p>
+
+<ul>
+  <li><strong>波速不再是给定的常数</strong>，而是每个位置、每个时刻"自己当地的 $u$ 值"。</li>
+  <li>物理直觉：$u$ 大（波峰）的地方速度大、追着$u$小的地方跑 → 这正是不平滑、甚至未来"撞车"（冲击波）的种子。</li>
+  <li>$u\cdot \partial_x u$ 里有 $u$ 的一次乘积项，这是<strong>非线性</strong>的最小单位。这一课就是让你看清这一刻。</li>
+</ul>
+
+<div class="box">
+<span class="box-title">◆ 直觉锚</span>
+想想公路上两辆车：前面慢车，后面快车追上来——间距会越来越小，形成"密度陡变"。非线性对流方程把这个"快追慢"写进了方程本身。Step 4 的 Burgers 会让你亲眼看到这条"车流"撞出冲击波。
+</div>
+
+<h2>2 · 离散化：只动一个字母</h2>
+
+<p>沿用 Step 1 的差分：时间前向、空间后向（迎风）。离散方程：</p>
+
+$$
+\frac{u_i^{n+1}-u_i^n}{\Delta t} + u_i^n\frac{u_i^n-u_{i-1}^n}{\Delta x} = 0
+$$
+
+<p>解出唯一未知 $u_i^{n+1}$：</p>
+
+$$
+u_i^{n+1} = u_i^n - u_i^n\frac{\Delta t}{\Delta x}(u_i^n-u_{i-1}^n)
+$$
+
+<p>对比 Step 1 的公式 $u_i^{n+1}=u_i^n-c\frac{\Delta t}{\Delta x}(\dots)$：<strong>只是把 $c$ 换成了 $u_i^n$</strong>。为什么是 $u_i^n$（中间下标 $i$）而不是 $u_{i-1}^n$？因为对流速度取了"我这个点当前的场值"——这是最朴素也最常用的选择（更讲究的版本会取迎风面值，那是 FVM 的事，我们到 Step 11 也不会用到）。</p>
+
+<h2>3 · 逐行注释：基于官方"未完成版"填上你的一行</h2>
+
+<p>官方 notebook 故意把时间推进的代码留空，只给了 Step 1 的原行作参考，让你<strong>自己改写</strong>。这是全课程第一次"让你填空"——官方说它"unfinished"是刻意的。完整代码如下（含你该补的那行）：</p>
+
+<pre><code>import numpy
+from matplotlib import pyplot
+%matplotlib inline
+
+nx = 41
+dx = 2 / (nx - 1)
+nt = 20          # 时间步数：比 Step 1 的 25 少一点
+dt = .025        # 每步时间跨度
+
+u = numpy.ones(nx)                          # 初始全 1
+u[int(.5 / dx):int(1 / dx + 1)] = 2         # 帽子：0.5≤x≤1 置 2
+
+un = numpy.ones(nx)                         # 临时数组
+
+for n in range(nt):                         # 外层：时间步
+    un = u.copy()                           # 快照：un=u^n（上一时间层）
+    for i in range(1, nx):                  # 内层：空间格点（跳过 i=0）
+        u[i] = un[i] - un[i] * dt / dx * (un[i] - un[i-1])
+        #      ↑新值   ↑旧值  ↑关键改动：c 换成 un[i]，其余与 Step 1 一模一样
+
+pyplot.plot(numpy.linspace(0, 2, nx), u)</code></pre>
+
+<h3>三个对比要点（对照 0002 的表格）</h3>
+
+<table>
+  <tr><th>Step 1（已学）</th><th>Step 2（本课）</th></tr>
+  <tr><td>系数 c * dt / dx</td><td>系数 un[i] * dt / dx</td></tr>
+  <tr><td>每个格点用的是同一条全局波速 c</td><td>每个格点用的是"当地"的 un[i]，随位置变化</td></tr>
+  <tr><td>帽子平移，形状保持（数值耗散除外）</td><td>形状会自我扭曲：高处跑得快，帽子前缘越来越陡</td></tr>
+</table>
+
+<div class="box">
+<span class="box-title">◆ 为什么内层还是跳过 i=0？</span>
+和 Step 1 完全同理：公式里要读 `un[i-1]`，i=0 时 `un[-1]` 是数组最后一个元素，是个陷阱而非边界。这一步的边界处理思路没变——只是方程变了。
+</div>
+
+<h2>4 · 必做实验</h2>
+
+<h3>实验 1：先按官方"填空版"自己写，跑通</h3>
+<p>在干净 notebook 里，从 import 到 plot 完整手打。跑完看见帽子。这一步验证你"能不能独立把改动落实在代码上"。</p>
+
+<h3>实验 2：把 nt 从 20 拉到 400</h3>
+<p>预测后再跑：<strong>帽子会在什么时候开始出现"前缘变陡"？</strong>为什么这个陡化会随时间累积？（提示：峰值处 $u=2$，平地处 $u=1$，快的追慢的，永远不可能追上后"超车"吗？答案在下方检查点。）注意随着尖锐化，数值耗散也在加剧。</p>
+
+<h3>实验 3（对比实验）：把 un[i]*dt/dx 改回 c*dt/dx</h3>
+<p>只用这一处回退，其余不动，nt 拉到 400。观察：帽子还陡化吗？——这是"线性 vs 非线性"的最直接对照实验。做完你会永远记住:c 那个 $u$ 是自己长出来的。</p>
+
+<h2>5 · 检查点：闭卷自测</h2>
+
+<details class="quiz"><summary>Q1 · 写出非线性对流的更新公式（闭卷默写）。</summary>
+<div class="a">$u_i^{n+1}=u_i^n-u_i^n\frac{\Delta t}{\Delta x}(u_i^n-u_{i-1}^n)$。<strong>重点检查那个位置</strong>：系数是 $u_i^n$（当地值）而不是 $c$、也不是 $u_{i-1}^n$。</div></details>
+
+<details class="quiz"><summary>Q2 · 为什么帽子会"前缘变陡"？物理上一句话解释。</summary>
+<div class="a">波速 $u$ 随地点的值变化：帽顶（u=2）比平地（u=1）跑得快，快的追慢的，前缘不断被"挤压"变陡。这是非线性对流"不平滑自我放大"的原型（线性方程不可能这样，因为波速处处相同）。</div></details>
+
+<details class="quiz"><summary>Q3 · 如果想让帽子陡化更早出现，改哪个参数最直接？</summary>
+<div class="a">增大速度差：把帽子的初值比如从 2 改大（如 4），或增大 nt（给足时间累积）。两者都会加快"快追慢"的挤压。</div></details>
+
+<details class="quiz"><summary>Q4（对照 · 费曼）· 向会用 Step 1、但没学 Step 2 的同学解释：为什么 Step 1 的帽子长时间后仍保持形状，Step 2 的会变尖？</summary>
+<div class="a">参考表述：Step 1 里所有位置的移动速度都相同（都是 c），所以波形整体平移、形状不变；Step 2 里移动速度 = 当地 u 值，帽子高点处跑得快，前面逐渐被"追"成陡坡。区别全在那个速度：常数 vs 当地值。</div></details>
+
+<details class="quiz"><summary>Q5 · 这一步的内层循环为什么仍从 i=1 开始、跳过 i=0？</summary>
+<div class="a">与 Step 1 同：公式需要 `un[i-1]`，i=0 时会访问 `un[-1]`（数组尾元素），产生错误的"左邻居"。跳过 i=0 等价于固定左边界格点的值。</div></details>
+
+<h2>6 · 默写任务（第 2 遍，必做）</h2>
+
+<div class="box">
+<span class="box-title">◆ 抄写三级跳 · 第 2 遍</span>
+合上讲义与官方 notebook，新建空白 notebook，<strong>先写 Step 1 全套再改出一行</strong>（这正是官方建议的复用法：代码复用是 CFD 家常便饭）。跑通后回答实验 2 的预测题（帽子何时变陡）。卡住的行标记为错题回查。
+</div>
+
+<div class="box">
+<span class="box-title">◆ 一手来源</span>
+Barba &amp; Forsyth, <em>CFD Python</em>, Step 2：本地 <code>code\cfdpython-repo\lessons\02_Step_2.ipynb</code>。<br>
+官方配套视频：<strong>Video Lesson 4</strong>（Step 1–4 离散化逐步拆解）：<a href="https://youtu.be/y2WaK7_iMRI">youtube</a>。<br>
+答疑：任何一行卡住，直接把报错贴给助教。
+</div>
+
+<footer class="lesson-foot">
+  <div class="nav">
+    <span><a href="0002-step1-linear-convection.html">← 0002 Step 1 线性对流</a></span>
+    <span><a href="../reference/glossary.html">术语表</a></span>
+    <span>下一课：0004 · CFL 条件专章</span>
+  </div>
+  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0003 课 · 2026-09-11</p>
+</footer>
+
+</div>
+</body>
+</html>

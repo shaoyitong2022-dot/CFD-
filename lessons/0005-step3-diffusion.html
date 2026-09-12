@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>0005 · Step 3 一维扩散</title>
+<link rel="stylesheet" href="../assets/course.css">
+<script>
+MathJax = { tex: { inlineMath: [['$', '$']] } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+<div class="page">
+
+<header class="lesson-head">
+  <p class="kicker">Lesson 0005 · Phase A 第 3 课</p>
+  <h1>Step 3 · 一维扩散：让帽子被"抹平"</h1>
+  <p class="meta">预计 40–50 分钟 ｜ 教材：<code>code\cfdpython-repo\lessons\04_Step_3.ipynb</code> ｜ <a href="0004-cfl-condition.html">← 前置 0004 CFL</a> ｜ <a href="../reference/glossary.html">术语表</a></p>
+</header>
+
+<div class="win">
+  <span class="box-title">✦ 今日战果</span>
+  ① 学会二阶导数的中心差分格式（泰勒展开推导），并把它写进 FTCS 格式；<br>
+  ② 亲眼看到帽子<strong>不移动、只扩散</strong>：尖锐边缘被抹平，最终趋于平直——这是扩散的物理签名；<br>
+  ③ 认识扩散格式的稳定因子 $\sigma_d = \frac{\nu\Delta t}{\Delta x^2}\le \frac12$（和 CFL 的 σ 是两回事，别混）。
+</div>
+
+<h2>1 · 从"搬运"转到"抹平"</h2>
+
+<p>前两步方程的物理是"把东西搬走"（对流）。扩散方程是另一种物理：</p>
+
+$$
+\frac{\partial u}{\partial t} = \nu \frac{\partial^2 u}{\partial x^2}
+$$
+
+<p>$\nu$ 是扩散系数（在流场里常叫"黏性"）。物理直觉：</p>
+<ul>
+  <li>$\partial^2_x u$ 度量的是"凹凸程度"：凸起的地方（二阶导为负，向下凸）会减少、凹陷处（向上凸）会填补——一句话：<strong>扩散 = 抚平所有尖锐特征</strong>。</li>
+  <li>对比对流：对流平移形状，扩散抹平形状。<strong>这是 CFD 里两个最基本的物理过程</strong>，Burgers（Step 4）把它们合体。</li>
+</ul>
+
+<h2>2 · 二阶导数怎么离散：用泰勒展开（核心推导）</h2>
+
+<p>一阶导数我们见过前向/后向。二阶导数有专门做法——<strong>中心差分</strong>，把 $u_{i+1}$ 和 $u_{i-1}$ 分别在 $u_i$ 处泰勒展开：</p>
+
+$$
+u_{i+1} = u_i + \Delta x\,\partial_x u\big|_i + \frac{\Delta x^2}{2}\partial^2_x u\big|_i + \frac{\Delta x^3}{6}\partial^3_x u\big|_i + O(\Delta x^4)
+$$
+
+$$
+u_{i-1} = u_i - \Delta x\,\partial_x u\big|_i + \frac{\Delta x^2}{2}\partial^2_x u\big|_i - \frac{\Delta x^3}{6}\partial^3_x u\big|_i + O(\Delta x^4)
+$$
+
+<p>两式<strong>相加</strong>：一阶和所有奇数阶项抵消（$\partial_x u$、$\partial^3_x u$ 都消掉），剩下：</p>
+
+$$
+u_{i+1} + u_{i-1} = 2u_i + \Delta x^2\partial^2_xu\big|_i + O(\Delta x^4)
+$$
+
+<p>解出二阶导：</p>
+
+$$
+\frac{\partial^2u}{\partial x^2}\bigg|_i = \frac{u_{i+1}-2u_i+u_{i-1}}{\Delta x^2} + O(\Delta x^2)
+$$
+
+<div class="box">
+<span class="box-title">◆ 中心差分是二阶精度的（误差 $O(\Delta x^2)$），比迎风一阶更准</span>
+这就是为什么同样的帽子，用中心差分扩散比迎风对流"碰撞"少。系数出现的 <code>-2</code> 正是来自 $u_{i+1}+u_{i-1}-2u_i$。看到 <code>-2</code> 就认出是二阶导数的模板。记忆法：<strong>「左右取一半 · 中间减双倍」</strong>。
+</div>
+
+<h2>3 · 完整离散方程与稳定写法</h2>
+
+<p>把二阶中心差分代入扩散方程（时间仍前向）：</p>
+
+$$
+\frac{u_i^{n+1}-u_i^{n}}{\Delta t} = \nu \frac{u_{i+1}^{n}-2u_i^{n}+u_{i-1}^{n}}{\Delta x^2}
+$$
+
+<p>移项解出 $u_i^{n+1}$：</p>
+
+$$
+u_i^{n+1} = u_i^{n} + \frac{\nu\Delta t}{\Delta x^2}(u_{i+1}^{n}-2u_i^{n}+u_{i-1}^{n})
+$$
+
+<p>这格式叫 <strong>FTCS</strong>：时间前向（Forward time）、空间中心（Centered space）。<strong>扩散也有稳定因子</strong>，官方在第 0005 课先留个口子，直接采用安全的取法：</p>
+
+$$
+\sigma_d = \frac{\nu\Delta t}{\Delta x^2} \le \frac12
+$$
+
+<p>因此官方做法是<strong>先定 σ 再由 dx 推算 dt</strong>（和 0004 的 `dt = sigma*dx` 一个思路）：</p>
+
+$$
+\Delta t = \sigma_d \frac{\Delta x^2}{\nu}
+$$
+
+<div class="box">
+<span class="box-title">⚠ 别把两个 σ 搞混</span>
+对流 CFL：$\sigma_c=\frac{u\Delta t}{\Delta x}\le1$（每步最多跑一格）。<br>
+扩散稳定：$\sigma_d=\frac{\nu\Delta t}{\Delta x^2}\le\frac12$（单位是"扩散每步能扫过多少格"）。<br>
+注意分母维度不同：$\Delta x$ vs $\Delta x^2$。CFD 面试常考这道区分题，0 003 个我自己也错过一次——先标记，后面 2D 还会再见。
+</div>
+
+<h2>4 · 逐行注释：官方原版</h2>
+
+<pre><code>import numpy
+from matplotlib import pyplot
+%matplotlib inline
+
+nx = 41
+dx = 2 / (nx - 1)       # Δx，同前
+nt = 20                 # 时间步数
+nu = 0.3                # 扩散系数 ν
+sigma = .2              # 稳定因子 σ_d（取小于 0.5 的安全值）
+dt = sigma * dx**2 / nu # ← 关键：dt 由 dx、σ、ν 推算，保证稳定
+
+u = numpy.ones(nx)                          # 初始全 1
+u[int(.5 / dx):int(1 / dx + 1)] = 2         # 帽子
+
+un = numpy.ones(nx)                         # 临时数组
+
+for n in range(nt):
+    un = u.copy()                           # un = u^n
+    for i in range(1, nx - 1):              # 注意：到 nx-2 为止（i=nx-1 会用到 u[nx]，越界）
+        u[i] = un[i] + nu * dt / dx**2 * (un[i+1] - 2 * un[i] + un[i-1])
+        #      ↑新值  ↑旧值    ↑νΔt/Δx²    ↑二阶差分模板
+
+pyplot.plot(numpy.linspace(0, 2, nx), u)</code></pre>
+
+<table>
+  <tr><th>行</th><th>干什么</th><th>为什么</th></tr>
+  <tr><td><code>dt = sigma * dx**2 / nu</code></td><td>由稳定因子反推时间步</td><td>保证 $σ_d=0.2\le0.5$，格式稳定（和 0004 修 CFL 同一套路）</td></tr>
+  <tr><td><code>for i in range(1, nx-1)</code></td><td>内层循环到 <code>nx-2</code> 为止</td><td>更新公式要读 <code>un[i+1]</code>；若 i=nx-1，<code>un[nx]</code> 越界。所以右端边界格点也必须跳过。</td></tr>
+  <tr><td><code>nu * dt / dx**2 * (un[i+1] - 2*un[i] + un[i-1])</code></td><td>把二阶导数模板×系数放进更新</td><td>直接对应 $u_i^{n+1}=u_i^n+\frac{\nu\Delta t}{\Delta x^2}(u_{i+1}^n-2u_i^n+u_{i-1}^n)$。</td></tr>
+</table>
+
+<div class="box">
+<span class="box-title">◆ 对比 Step 1：这里为什么要多跳过一格？</span>
+Step 1 只读 <code>un[i-1]</code> → 只需跳过左边界 i=0。<br>
+Step 3 读 <code>un[i-1]</code> 和 <code>un[i+1]</code> → 左右边界 i=0 和 i=nx-1 都得跳过。这是一个会忘的细节，盯住内层的区间写。</div>
+
+<h2>5 · 必做实验</h2>
+
+<p><strong>实验 1（官方默认）</strong>：跑上图。观察帽子<strong>原地不动、被抹平</strong>——最高点从 2 往下掉，两肩变平，最终接近平直的 1。这就是扩散。</p>
+
+<p><strong>实验 2</strong>：把 <code>nu</code> 从 0.3 改到 1。预测后跑：扩散是不是变快（帽子更快消失）？（是的——ν 就是扩散速率）</p>
+
+<p><strong>实验 3（必做，对着 0004 回忆）</strong>：把 <code>dt=sigma*dx**2/nu</code> 改成手工固定小值（如 <code>dt=0.0025</code>），然后对比 $\sigma_d$——如果「忘了切换」保持默认，把 <code>sigma=0.6</code>（超出 0.5）跑一次。你预期看到什么？试试。观察扩散格式自己的不稳定长什么样（振荡、但不是"跑得快爆炸"，请记录现象）。</p>
+
+<h2>6 · 检查点：闭卷自测</h2>
+
+<details class="quiz"><summary>Q1 · 写出二阶导数的中心差分公式（闭卷默写）。</summary>
+<div class="a">$\frac{\partial^2u}{\partial x^2}\big|_i \approx \frac{u_{i+1}-2u_i+u_{i-1}}{\Delta x^2}$。中间系数是 -2，分子"左右相加减中间两倍"。</div></details>
+
+<details class="quiz"><summary>Q2 · 为什么扩散方程要用中心差分而不是迎风（后向）？</summary>
+<div class="a">扩散是各向同性随机"抚平"过程——信息从两边邻居同时来，没有"上游/下游"之分。所以二阶导的中心差分（对两边的邻居对称）是天然的选择；迎风是专为"有方向的对流"设计的。</div></details>
+
+<details class="quiz"><summary>Q3 · 扩散格式的稳定条件是什么？它和对流 CFL 的 σ 有何本质不同？</summary>
+<div class="a">$\sigma_d=\frac{\nu\Delta t}{\Delta x^2}\le\frac12$。对流 CFL 是 $\sigma_c=\frac{u\Delta t}{\Delta x}\le1$。区别在分母：$\Delta x$ vs $\Delta x^2$——这是"单位时间内扩散扫过的格数"和"波跑过的格数"之间的量纲差别。</div></details>
+
+<details class="quiz"><summary>Q4 · 为什么内层循环用 range(1, nx-1) 而非 range(1, nx)？</summary>
+<div class="a">更新公式要读 <code>un[i+1]</code>，当 i=nx-1 时越界。所以右边界格点也跳过（露出来当边界条件）。对称的，左边界 i=0 也由 range 起点 1 跳过。</div></details>
+
+<details class="quiz"><summary>Q5（费曼）· 用不超过三句话向同学解释：为什么扩散的帽子不会移动，只会被抹掉？</summary>
+<div class="a">参考表述：对流有一个方向，所以帽子整体平移；扩散没有方向，二阶导只"看凹凸"——凸的地方往下塌、凹的地方被填，所有尖角都被摊平，而帽子整体的重心不动，所以它只是原地变矮变胖，最终变成平线。</div></details>
+
+<h2>7 · 默写任务（第 2 遍，必做）</h2>
+
+<div class="box">
+<span class="box-title">◆ 抄写三级跳 · 第 2 遍</span>
+合上讲义，完整默写 Step 3（含 `dt = sigma * dx**2 / nu` 与 `range(1, nx-1)`），跑通并确认帽子"原地抹平"。然后回答 Q3 的口算与实验 3 的观察。卡壳处标错题返回。<br>
+<strong>第 3 遍</strong>：改 <code>nu</code> 验证实验 2 预测；把 σ 调到 0.6 观察不稳定。
+</div>
+
+<div class="box">
+<span class="box-title">◆ 一手来源</span>
+Barba &amp; Forsyth, <em>CFD Python</em>, Step 3：本地 <code>code\cfdpython-repo\lessons\04_Step_3.ipynb</code>。<br>
+官方配套视频：<strong>Video Lesson 4</strong>（Step 1–4，含二阶导中心差分拆解）：<a href="https://youtu.be/y2WaK7_iMRI">youtube</a>。<br>
+答疑：报错/现象贴给助教。
+</div>
+
+<footer class="lesson-foot">
+  <div class="nav">
+    <span><a href="0004-cfl-condition.html">← 0004 CFL 条件</a></span>
+    <span><a href="../reference/glossary.html">术语表</a></span>
+    <span>下一课：0006 · Step 4 一维 Burgers + Sympy</span>
+  </div>
+  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0005 课 · 2026-09-11</p>
+</footer>
+
+</div>
+</body>
+</html>

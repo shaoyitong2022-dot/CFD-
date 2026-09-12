@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>课程导航 · CFDPython 双轨课程</title>
+<link rel="stylesheet" href="assets/course.css">
+<style>
+.course-list { list-style: none; padding: 0; }
+.course-list li { padding: 0.85rem 1rem; border: 1px solid var(--line); border-radius: 6px; margin: 0.6rem 0; background: #fff; }
+.course-list a { font-weight: 700; text-decoration: none; color: var(--accent); font-family: var(--sans); }
+.course-list a:hover { text-decoration: underline; }
+.course-list .desc { display: block; font-size: 0.85rem; color: var(--muted); margin-top: 0.3rem; font-family: var(--sans); }
+.badge { display:inline-block; font-size:0.72rem; padding:0.1rem 0.5rem; border-radius:999px; margin-left:0.4rem; vertical-align:middle; font-family:var(--sans);}
+.badge.a { background: #e8f4ff; color: #1c5d99; }
+.badge.b { background: #e6f7f5; color: #0f6b6b; }
+.tag { font-size: 0.85rem; color: var(--muted); font-family: var(--sans); }
+</style>
+</head>
+<body>
+<div class="page">
+<header class="lesson-head">
+  <p class="kicker">双轨课程 · 索引</p>
+  <h1>CFDPython 12 步 × 谐振子 PINN</h1>
+  <p class="meta">手写数值基准（A 轨）+ 物理信息神经网络（B 轨）｜ 平板版自包含文件，离线可读 ｜ <a href="reference/glossary.html">术语表</a> ｜ <a href="README.md">关于本课程</a></p>
+</header>
+
+<h2>A 轨 · FDM（CFDPython 12 步）</h2>
+<ul class="course-list">
+  <li><a href="tablet/0001-env-numpy-first-look.html">0001 · 环境点火与 NumPy</a><span class="badge a">A</span>
+    <span class="desc">Jupyter/PyCharm 配置、数组切片、第一张图、向量化 100 倍</span></li>
+  <li><a href="tablet/0002-step1-linear-convection.html">0002 · Step 1 一维线性对流</a><span class="badge a">A</span>
+    <span class="desc">迎风差分、帽子初始、数值耗散初体验、抄写三级跳起点</span></li>
+  <li><a href="tablet/0003-step2-nonlinear-convection.html">0003 · Step 2 非线性对流</a><span class="badge a">A</span>
+    <span class="desc">波速=自身、帽子变陡、线到非线的一脚</span></li>
+  <li><a href="tablet/0004-cfl-condition.html">0004 · CFL 条件专章</a><span class="badge a">A</span>
+    <span class="desc">Courant 数、稳定判据、亲手触发爆炸、dt 绑 dx</span></li>
+  <li><a href="tablet/0005-step3-diffusion.html">0005 · Step 3 一维扩散</a><span class="badge a">A</span>
+    <span class="desc">二阶导数中心差分（泰勒推导）、FTCS、σ_d 稳定条件</span></li>
+  <li><a href="tablet/0006-step4-burgers.html">0006 · Step 4 一维 Burgers</a><span class="badge a">A</span>
+    <span class="desc">对流+扩散合体、SymPy 求导 + lambdify、周期边界、解析对照</span></li>
+  <li><a href="tablet/0007-step5-6-2d-convection.html">0007 · Step 5+6 二维对流</a><span class="badge a">A</span>
+    <span class="desc">二维索引约定、meshgrid、u/v 耦合、向量化替代循环</span></li>
+  <li><a href="tablet/0008-step7-8-2d-diffusion-burgers.html">0008 · Step 7+8 二维扩散与 Burgers</a><span class="badge a">A</span>
+    <span class="desc">2D 扩散稳定取法、二维 Burgers = 积木组装（Burgers 主线 FDM 基准）</span></li>
+  <li><a href="tablet/0009-step9-10-laplace-poisson.html">0009 · Step 9+10 Laplace 与 Poisson</a><span class="badge a">A</span>
+    <span class="desc">椭圆型、五点模板、L1 收敛判据、函数化、源项</span></li>
+  <li><a href="tablet/0010-step11-12-ns-cavity-channel.html">0010 · Step 11+12 二维 NS</a><span class="badge a">A</span>
+    <span class="desc">投影法、压力泊松、腔流盖子、通道流周期边界 + F 源项（A 轨收官）</span></li>
+</ul>
+
+<h2>B 轨 · PINN（谐振子）</h2>
+<ul class="course-list">
+  <li><a href="tablet/0011-b1-pinn-concept.html">0011 · B1 PINN 概念</a><span class="badge b">B</span>
+    <span class="desc">裸 NN 为何只会插值、阻尼振子方程与解析解、归纳偏置</span></li>
+  <li><a href="tablet/0012-b2-bare-nn-training.html">0012 · B2 裸 NN 与训练循环</a><span class="badge b">B</span>
+    <span class="desc">FCN 网络类、zero_grad/backward/step 四步、看到"不会物理"的样子</span></li>
+  <li><a href="tablet/0013-b3-autograd-physics-loss.html">0013 · B3 autograd 与物理损失</a><span class="badge b">B</span>
+    <span class="desc">核心课：requires_grad_、create_graph=True、残差、物理损失五行</span></li>
+  <li><a href="tablet/0014-b4-pinn-full.html">0014 · B4 PINN 合体</a><span class="badge b">B</span>
+    <span class="desc">数据+物理双损失、外推成功、损失权重平衡玄学</span></li>
+  <li><a href="tablet/0015-b5-three-curve-comparison.html">0015 · B5 三线对比（收官）</a><span class="badge b">B</span>
+    <span class="desc">解析 vs FDM vs PINN 同框、截断误差 vs 优化误差、双轨毕业</span></li>
+</ul>
+
+<footer class="lesson-foot">
+  <div class="nav">
+    <span><a href="reference/glossary.html">术语表</a></span>
+    <span><a href="README.md">关于本课程</a></span>
+    <span><a href="LICENSE">许可 (CC-BY 4.0)</a></span>
+  </div>
+  <p style="margin-top:0.8rem">CFDPython 中文本土化教程 · 索引（共 15 课）</p>
+</footer>
+</div>
+</body>
+</html>

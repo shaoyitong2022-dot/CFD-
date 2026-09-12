@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>0004 · CFL 条件专章</title>
+<style>
+/* CFDPython 双轨课程共享样式表 —— 所有课页与参考页统一引用 */
+:root {
+  --ink: #1f2328;
+  --paper: #fffdf7;
+  --soft: #f6f4ec;
+  --accent: #0f6b6b;        /* 主强调：深青 */
+  --accent-2: #b3541e;      /* 次强调：赭橙 */
+  --line: #d8d2c2;
+  --code-bg: #f4f2ea;
+  --muted: #6e6a5e;
+  --serif: "Source Han Serif SC", "Noto Serif SC", "Songti SC", Georgia, serif;
+  --sans: "Source Han Sans SC", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --mono: "Cascadia Code", Consolas, "JetBrains Mono", monospace;
+}
+
+* { box-sizing: border-box; }
+
+html { font-size: 17px; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  line-height: 1.85;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 5rem;
+}
+
+/* ---------- 头部 ---------- */
+header.lesson-head {
+  border-bottom: 3px double var(--line);
+  padding-bottom: 1.2rem;
+  margin-bottom: 2.2rem;
+}
+.kicker {
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin: 0 0 0.5rem;
+}
+h1 {
+  font-size: 1.9rem;
+  line-height: 1.3;
+  margin: 0 0 0.6rem;
+  font-weight: 700;
+}
+.meta {
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.meta a { color: var(--accent); text-decoration: none; }
+.meta a:hover { text-decoration: underline; }
+
+/* ---------- 正文 ---------- */
+h2 {
+  font-size: 1.28rem;
+  margin: 2.6rem 0 0.9rem;
+  padding-left: 0.65rem;
+  border-left: 4px solid var(--accent);
+}
+h3 { font-size: 1.05rem; margin: 1.8rem 0 0.6rem; }
+
+p { margin: 0.9rem 0; }
+
+a { color: var(--accent); }
+a:hover { color: var(--accent-2); }
+
+strong { font-weight: 700; }
+
+/* ---------- 代码 ---------- */
+code {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  background: var(--code-bg);
+  padding: 0.12em 0.4em;
+  border-radius: 3px;
+  border: 1px solid var(--line);
+}
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 4px;
+  padding: 1rem 1.2rem;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.86rem;
+}
+.cm { color: #8a8577; font-style: italic; }      /* 代码注释色（教学用内联高亮） */
+
+/* ---------- 提示框 ---------- */
+.box {
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--accent-2);
+  background: var(--soft);
+  padding: 1rem 1.3rem;
+  margin: 1.6rem 0;
+  border-radius: 0 4px 4px 0;
+}
+.box .box-title {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  color: var(--accent-2);
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+/* ---------- 今日战果 ---------- */
+.win {
+  border: 2px solid var(--accent);
+  border-radius: 6px;
+  padding: 1.1rem 1.4rem;
+  margin: 1.8rem 0;
+  background: #f0f7f5;
+}
+.win .box-title { color: var(--accent); }
+
+/* ---------- 小测（检索练习） ---------- */
+details.quiz {
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: #fff;
+  margin: 1rem 0;
+  padding: 0;
+}
+details.quiz summary {
+  cursor: pointer;
+  font-family: var(--sans);
+  font-weight: 600;
+  padding: 0.8rem 1.1rem;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+details.quiz summary::before {
+  content: "▸";
+  color: var(--accent);
+  transition: transform 0.15s;
+}
+details.quiz[open] summary::before { transform: rotate(90deg); }
+details.quiz .a {
+  padding: 0.3rem 1.4rem 1rem;
+  border-top: 1px dashed var(--line);
+  color: #33413b;
+}
+details.quiz .a::before {
+  content: "答案";
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  color: var(--accent);
+  display: block;
+  margin-top: 0.6rem;
+}
+
+/* ---------- 术语表 ---------- */
+dl.gloss dt {
+  font-family: var(--sans);
+  font-weight: 700;
+  color: var(--accent);
+  margin-top: 1.1rem;
+}
+dl.gloss dt .en { font-weight: 400; color: var(--muted); font-size: 0.85em; }
+dl.gloss dd { margin: 0.2rem 0 0 0; }
+
+/* ---------- 表格 ---------- */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.4rem 0;
+  font-family: var(--sans);
+  font-size: 0.88rem;
+}
+th, td {
+  border: 1px solid var(--line);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+th { background: var(--soft); }
+tr:nth-child(even) td { background: #fbfaf4; }
+
+/* ---------- 页脚导航 ---------- */
+footer.lesson-foot {
+  margin-top: 3.5rem;
+  padding-top: 1.2rem;
+  border-top: 3px double var(--line);
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+footer.lesson-foot .nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+footer.lesson-foot a { color: var(--accent); text-decoration: none; }
+footer.lesson-foot a:hover { text-decoration: underline; }
+
+/* ---------- 平板 / 小屏适配 ---------- */
+@media (max-width: 820px) {
+  html { font-size: 16px; }
+  .page { padding: 1.5rem 1rem 3rem; }
+  h1 { font-size: 1.55rem; }
+  h2 { font-size: 1.15rem; }
+  pre {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    padding: 0.85rem 1rem;
+    -webkit-overflow-scrolling: touch;
+    overflow-x: auto;
+  }
+  code { word-break: break-word; }
+  /* 代码行内注释在窄屏不自动换行断在奇怪位置 */
+  pre code { white-space: pre; }
+  table { font-size: 0.8rem; }
+  th, td { padding: 0.4rem 0.5rem; }
+  .box, .win { padding: 0.9rem 1.1rem; }
+  footer.lesson-foot .nav { flex-direction: column; gap: 0.4rem; }
+}
+
+/* ---------- 打印 ---------- */
+@media print {
+  body { background: #fff; font-size: 11pt; }
+  .page { max-width: none; padding: 0; }
+  details.quiz { border: 1px solid #999; }
+  details.quiz .a { display: block !important; }
+  pre { background: #fff; }
+}
+
+</style>
+<script>
+MathJax = { tex: { inlineMath: [['$', '$']] } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+<div class="page">
+
+<header class="lesson-head">
+  <p class="kicker">Lesson 0004 · Phase A 专章</p>
+  <h1>CFL 条件：显式格式的生存法则</h1>
+  <p class="meta">预计 40–50 分钟 ｜ 教材：<code>code\cfdpython-repo\lessons\03_CFL_Condition.ipynb</code> ｜ 前置 0002、0003 ｜ <a href="../reference/glossary.html">术语表</a></p>
+</header>
+
+<div class="win">
+  <span class="box-title">✦ 今日战果</span>
+  ① 亲手触发一次"数值爆炸"，并理解它为什么发生——这是 CFD 学生必吃的一课；<br>
+  ② 掌握 Courant 数 $\sigma=\frac{u\Delta t}{\Delta x}$ 与判据 $\sigma \le 1$，能当场口算并解释；<br>
+  ③ 学会把 $\Delta t$ "绑"在 $\Delta x$ 上（官方推荐的稳定写法），让代码不会因参数组合而炸。
+</div>
+
+<h2>1 · 先谈谈你已经悄悄踩过的坑</h2>
+
+<p>0002 实验 2 里，如果你把 <code>dt=0.025</code> 改大，可能已经看到数值解<strong>冒出锯齿、甚至输出 NaN</strong>。那不是 Bug，是格式的<strong>稳定性条件</strong>被突破了。这一课就是给它一个名字：<strong>CFL 条件</strong>（Courant–Friedrichs–Lewy，来自 1928 年那三位数学家的名字）。</p>
+
+<div class="box">
+<span class="box-title">◆ 稳定 ≠ 精确，先分清</span>
+"稳定"说的是：解不会无限放大、不会爆炸；"精确"说的是：解离真解有多近。CFL 管的是前一件事。一个格式可以稳定但不精确（比如迎风一阶的数值耗散），也可以精确但不稳定（比如下面你会看到的中心差分对流）——两者是不同维度的问题。
+</div>
+
+<h2>2 · 物理直觉：信息每步能传多远</h2>
+
+<p>把我们的代码换一种说法。每一层时间循环，我们做的是：看到当前时刻所有格点的 $u$，然后推断 $\Delta t$ 之后每个格点的新值。关键在于：<strong>这个推断要能完成，物理上得允许信息在 $\Delta t$ 内到达</strong>。</p>
+
+<p>波以速度 $u$ 向右跑。一个时间步 $\Delta t$ 里，波移动了 $u\Delta t$ 的距离。网格里相邻两个点 $x_i$、$x_{i+1}$ 相距 $\Delta x$。现在问题来了：</p>
+
+<ul>
+  <li>如果 $u\Delta t$ 小于或等于 $\Delta x$（一个时间步波最多跑一格）：信息总是"来得及"传到目标格点，格式可能稳定。</li>
+  <li>如果 $u\Delta t$ 大于 $\Delta x$（一个时间步波跑过好几格）：我们只用了一格之内的信息去算 $\Delta t$ 后的值，信息事实上"追不上"——数学上这就触发不稳定的根源。</li>
+</ul>
+
+<p>写成无量纲数（<strong>Courant 数</strong>，也称 CFL 数）：</p>
+
+$$
+\sigma = \frac{u \Delta t}{\Delta x}
+$$
+
+<p>稳定性判据（对一维线性对流 + 迎风显式格式）：</p>
+
+$$
+\sigma \le \sigma_{\max} , \qquad \sigma_{\max}=1
+$$
+
+<div class="box">
+<span class="box-title">◆ 记忆锚：σ 是"一个时间步内波能穿过几个格子"的度量</span>
+$\sigma=1$ 是极限：波恰好跑一个格子；$\sigma=0.5$：每步跑半格，稳妥；$\sigma>1$：波每步跑超过一个格子，数值解要炸。换句话说，<strong>显式格式的"世界速度极限"是一个时间步=一个格子</strong>。
+</div>
+
+<h2>3 · 亲手触发爆炸（官方同款实验）</h2>
+
+<p>官方把这个实验写成了一个函数 <code>linearconv(nx)</code>，方便只改 <code>nx</code> 去观察。第一步先用"固定 dt"版本复现爆炸：</p>
+
+<pre><code>import numpy
+from matplotlib import pyplot
+%matplotlib inline
+
+def linearconv(nx):
+    dx = 2 / (nx - 1)
+    nt = 20
+    dt = .025    # 固定 dt，不随 dx 变化  ← 问题的根源
+    c = 1
+
+    u = numpy.ones(nx)
+    u[int(.5 / dx) : int(1 / dx + 1)] = 2
+
+    un = numpy.ones(nx)
+
+    for n in range(nt):
+        un = u.copy()
+        for i in range(1, nx):
+            u[i] = un[i] - c * dt / dx * (un[i] - un[i-1])
+
+    pyplot.plot(numpy.linspace(0, 2, nx), u)
+
+linearconv(41)</code></pre>
+
+<p>现在依次执行 <code>linearconv(61)</code>、<code>linearconv(71)</code>、<code>linearconv(85)</code>。<strong>先预测，后运行</strong>。<code>nx</code> 增大 → $dx$ 变小 → 而 $dt=0.025$ 不变 → $\sigma=c\,dt/dx$ 不断变大。到 nx=85 时 $dx=2/84≈0.0238$，$\sigma≈1.05>1$——<strong>爆炸点</strong>。你看到的那个"和帽子毫无关系"的剧烈震荡图，就是数值不稳定的实况。</p>
+
+<div class="box">
+<span class="box-title">◆ 为什么 nx=85 时炸，71 不炸？算一遍给自己看</span>
+$dx(85)=2/84=0.02381$，$\sigma(85)=\frac{1\times0.025}{0.02381}=1.05>1$ 炸。<br>
+$dx(71)=2/70=0.02857$，$\sigma(71)=\frac{0.025}{0.02857}=0.875<1$ 稳。<br>
+边界就在 $\sigma=1$ 附近。口算这种数，是面试/组会被问 CFL 时的基本功。
+</div>
+
+<h2>4 · 正确写法：把 dt 绑到 dx 上</h2>
+
+<p>官方给出的修复非常简洁：给定 Courant 数 $\sigma$，让 $dt$ 由 $dx$ <strong>自动推导</strong>：</p>
+
+$$
+\Delta t = \sigma \frac{\Delta x}{u}
+$$
+
+<p>改后的函数（官方原版）：</p>
+
+<pre><code>import numpy
+from matplotlib import pyplot
+
+def linearconv(nx):
+    dx = 2 / (nx - 1)
+    nt = 20
+    c = 1
+    sigma = .5            # ← 想要的 Courant 数（稳定区间内随便选）
+    dt = sigma * dx       # ← 关键修复：dt 跟随 dx，σ 恒为 0.5
+
+    u = numpy.ones(nx)
+    u[int(.5 / dx) : int(1 / dx + 1)] = 2
+
+    un = numpy.ones(nx)
+
+    for n in range(nt):
+        un = u.copy()
+        for i in range(1, nx):
+            u[i] = un[i] - c * dt / dx * (un[i] - un[i-1])
+
+    pyplot.plot(numpy.linspace(0, 2, nx), u)</code></pre>
+
+<p>隔一行 `dt = sigma * dx`，就同时实现了两个目标：无论 <code>nx</code> 多大都稳定，且 Courant 数可显式控制。跑 <code>linearconv(41/61/81/101/121)</code> 全部稳定。</p>
+
+<div class="box">
+<span class="box-title">◆ 但多了一个新现象</span>
+注意官方提示：网格越密，冒出来的帽形<strong>整体移动得越短</strong>。为什么？<code>nt</code> 固定是 20，但 $dt$ 随 $dx$ 变小了 → 总模拟时长 $nt\cdot dt$ 也变小 → 波走得总距离变短，这是"模拟更短的时间"而"不是"波变慢了。这是网格收敛讨论里的常客，后面步进 2D 时会再次相见。
+</div>
+
+<h2>5 · 检查点：闭卷自测</h2>
+
+<details class="quiz"><summary>Q1 · 写出 Courant 数定义，以及一维迎风显式格式的稳定性判据。</summary>
+<div class="a">$\sigma=\frac{u\Delta t}{\Delta x}=\frac{c\Delta t}{\Delta x}$，判据 $\sigma\le1$（=1 是极限）。用语言说：一个时间步里波移动的距离不能超过一个网格宽度。</div></details>
+
+<details class="quiz"><summary>Q2 · nx=85、dt=0.025、c=1，σ 是多少？稳定吗？</summary>
+<div class="a">$dx=2/84≈0.02381$，$\sigma=0.025/0.02381≈1.05>1$，不稳定——这就是官方实验里看到爆炸的那个组合。</div></details>
+
+<details class="quiz"><summary>Q3 · 网格翻倍（nx 41→81），若 dt 不变、c 不变，σ 怎么变？</summary>
+<div class="a">dx 减半 → σ 变为原来的 2 倍。所以"加密网格"如果不配 <code>dt</code> 相应减小，反而更容易不稳定。这正是"dt 必须绑在 dx 上"的原因。</div></details>
+
+<details class="quiz"><summary>Q4 · 为了让 σ=0.5，当 dx=0.01 时 dt 应是多少（u=1）？</summary>
+<div class="a">$dt = \sigma\frac{dx}{u} = 0.5\times0.01=0.005$。这就是官方代码里 <code>dt = sigma * dx</code> 那一行的含义。</div></details>
+
+<details class="quiz"><summary>Q5（费曼）· 向一个只会用 Mathematica 符号计算的同学解释：为什么显式时间推进有个"每步不超过一个网格"的速度极限？</summary>
+<div class="a">参考表述：电脑只能在网格点上取值，一次时间步之后，每个格点的新值只能由它"够得着"的邻居算出；波一个时间步走的路程若超过一个网格，就超出了这个点信息能到达的范围，数值解于是失去因果联系、开始乱震（不稳）。要稳，就得让波每步最多走一格，也就是 σ≤1。</div></details>
+
+<h2>6 · 默写任务（第 2 遍，必做）</h2>
+
+<div class="box">
+<span class="box-title">◆ 抄写三级跳 · 第 2 遍</span>
+合上讲义，从零默写 <code>linearconv(nx)</code>（含 `dt = sigma * dx` 修复版），跑 <code>41/61/81/101/121</code> 全部稳定。然后回答 Q2 的口算。卡壳的地方标错题。<br>
+<strong>额外一步（第 3 遍）</strong>：手动算一组合法的 ($nx, \sigma$) → 推导对应 ($dx, dt$)，再跑代码验证图不炸。
+</div>
+
+<div class="box">
+<span class="box-title">◆ 一手来源</span>
+Barba &amp; Forsyth, <em>CFD Python</em>, CFL Condition：本地 <code>code\cfdpython-repo\lessons\03_CFL_Condition.ipynb</code>。<br>
+官方配套视频：<strong>Video Lesson 9</strong>（收敛与 CFL 的严谨分析）：<a href="https://youtu.be/Yw1YPBupZxU">youtube</a>。<br>
+延伸阅读：Anderson 教材的稳定性章节（资源清单里有）。
+</div>
+
+<footer class="lesson-foot">
+  <div class="nav">
+    <span><a href="0003-step2-nonlinear-convection.html">← 0003 Step 2 非线性对流</a></span>
+    <span><a href="../reference/glossary.html">术语表</a></span>
+    <span>下一课：0005 · Step 3 一维扩散</span>
+  </div>
+  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0004 课 · 2026-09-11</p>
+</footer>
+
+</div>
+</body>
+</html>

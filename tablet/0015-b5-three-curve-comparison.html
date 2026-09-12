@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>0015 · B5 三线对比（收官）</title>
+<style>
+/* CFDPython 双轨课程共享样式表 —— 所有课页与参考页统一引用 */
+:root {
+  --ink: #1f2328;
+  --paper: #fffdf7;
+  --soft: #f6f4ec;
+  --accent: #0f6b6b;        /* 主强调：深青 */
+  --accent-2: #b3541e;      /* 次强调：赭橙 */
+  --line: #d8d2c2;
+  --code-bg: #f4f2ea;
+  --muted: #6e6a5e;
+  --serif: "Source Han Serif SC", "Noto Serif SC", "Songti SC", Georgia, serif;
+  --sans: "Source Han Sans SC", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --mono: "Cascadia Code", Consolas, "JetBrains Mono", monospace;
+}
+
+* { box-sizing: border-box; }
+
+html { font-size: 17px; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  line-height: 1.85;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 5rem;
+}
+
+/* ---------- 头部 ---------- */
+header.lesson-head {
+  border-bottom: 3px double var(--line);
+  padding-bottom: 1.2rem;
+  margin-bottom: 2.2rem;
+}
+.kicker {
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin: 0 0 0.5rem;
+}
+h1 {
+  font-size: 1.9rem;
+  line-height: 1.3;
+  margin: 0 0 0.6rem;
+  font-weight: 700;
+}
+.meta {
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.meta a { color: var(--accent); text-decoration: none; }
+.meta a:hover { text-decoration: underline; }
+
+/* ---------- 正文 ---------- */
+h2 {
+  font-size: 1.28rem;
+  margin: 2.6rem 0 0.9rem;
+  padding-left: 0.65rem;
+  border-left: 4px solid var(--accent);
+}
+h3 { font-size: 1.05rem; margin: 1.8rem 0 0.6rem; }
+
+p { margin: 0.9rem 0; }
+
+a { color: var(--accent); }
+a:hover { color: var(--accent-2); }
+
+strong { font-weight: 700; }
+
+/* ---------- 代码 ---------- */
+code {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  background: var(--code-bg);
+  padding: 0.12em 0.4em;
+  border-radius: 3px;
+  border: 1px solid var(--line);
+}
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 4px;
+  padding: 1rem 1.2rem;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.86rem;
+}
+.cm { color: #8a8577; font-style: italic; }      /* 代码注释色（教学用内联高亮） */
+
+/* ---------- 提示框 ---------- */
+.box {
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--accent-2);
+  background: var(--soft);
+  padding: 1rem 1.3rem;
+  margin: 1.6rem 0;
+  border-radius: 0 4px 4px 0;
+}
+.box .box-title {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  color: var(--accent-2);
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+/* ---------- 今日战果 ---------- */
+.win {
+  border: 2px solid var(--accent);
+  border-radius: 6px;
+  padding: 1.1rem 1.4rem;
+  margin: 1.8rem 0;
+  background: #f0f7f5;
+}
+.win .box-title { color: var(--accent); }
+
+/* ---------- 小测（检索练习） ---------- */
+details.quiz {
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: #fff;
+  margin: 1rem 0;
+  padding: 0;
+}
+details.quiz summary {
+  cursor: pointer;
+  font-family: var(--sans);
+  font-weight: 600;
+  padding: 0.8rem 1.1rem;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+details.quiz summary::before {
+  content: "▸";
+  color: var(--accent);
+  transition: transform 0.15s;
+}
+details.quiz[open] summary::before { transform: rotate(90deg); }
+details.quiz .a {
+  padding: 0.3rem 1.4rem 1rem;
+  border-top: 1px dashed var(--line);
+  color: #33413b;
+}
+details.quiz .a::before {
+  content: "答案";
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  color: var(--accent);
+  display: block;
+  margin-top: 0.6rem;
+}
+
+/* ---------- 术语表 ---------- */
+dl.gloss dt {
+  font-family: var(--sans);
+  font-weight: 700;
+  color: var(--accent);
+  margin-top: 1.1rem;
+}
+dl.gloss dt .en { font-weight: 400; color: var(--muted); font-size: 0.85em; }
+dl.gloss dd { margin: 0.2rem 0 0 0; }
+
+/* ---------- 表格 ---------- */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.4rem 0;
+  font-family: var(--sans);
+  font-size: 0.88rem;
+}
+th, td {
+  border: 1px solid var(--line);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+th { background: var(--soft); }
+tr:nth-child(even) td { background: #fbfaf4; }
+
+/* ---------- 页脚导航 ---------- */
+footer.lesson-foot {
+  margin-top: 3.5rem;
+  padding-top: 1.2rem;
+  border-top: 3px double var(--line);
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+footer.lesson-foot .nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+footer.lesson-foot a { color: var(--accent); text-decoration: none; }
+footer.lesson-foot a:hover { text-decoration: underline; }
+
+/* ---------- 平板 / 小屏适配 ---------- */
+@media (max-width: 820px) {
+  html { font-size: 16px; }
+  .page { padding: 1.5rem 1rem 3rem; }
+  h1 { font-size: 1.55rem; }
+  h2 { font-size: 1.15rem; }
+  pre {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    padding: 0.85rem 1rem;
+    -webkit-overflow-scrolling: touch;
+    overflow-x: auto;
+  }
+  code { word-break: break-word; }
+  /* 代码行内注释在窄屏不自动换行断在奇怪位置 */
+  pre code { white-space: pre; }
+  table { font-size: 0.8rem; }
+  th, td { padding: 0.4rem 0.5rem; }
+  .box, .win { padding: 0.9rem 1.1rem; }
+  footer.lesson-foot .nav { flex-direction: column; gap: 0.4rem; }
+}
+
+/* ---------- 打印 ---------- */
+@media print {
+  body { background: #fff; font-size: 11pt; }
+  .page { max-width: none; padding: 0; }
+  details.quiz { border: 1px solid #999; }
+  details.quiz .a { display: block !important; }
+  pre { background: #fff; }
+}
+
+</style>
+<script>
+MathJax = { tex: { inlineMath: [['$', '$']] } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+<div class="page">
+
+<header class="lesson-head">
+  <p class="kicker">Lesson 0015 · Phase B 收官 · 双轨合流</p>
+  <h1>B5 · 三线对比：解析解 vs FDM vs PINN</h1>
+  <p class="meta">预计 40 分钟 ｜ 需要 A 轨中心差分（0006 一维 Burgers 用到的二阶差分/时间积分直觉）和 B4 的 PINN 结果 ｜ <a href="0014-b4-pinn-full.html">← 前置 B4</a></p>
+</header>
+
+<div class="win">
+  <span class="box-title">✦ 今日战果（双轨课程终极交付物）</span>
+  ① 给同一个阻尼谐振子画出<strong>三条曲线</strong>：解析解（灰色）、FDM 求解（0006 你手写的差分）、PINN（B4 你训练的网络）；<br>
+  ② 能说出 FDM 与 PINN 各自误差的来源（截断误差 vs 优化误差），并解释两者的角色分工；<br>
+  ③ 这张三线图 = 本课程学习目标"先传统后 SciML"叙事的第一张实证图。
+</div>
+
+<h2>1 · 为什么要这张图</h2>
+
+<p>你在课程主线中定的路线是"<strong>先手写传统数值格式出基准（FDM），再上 SciML（PINN）</strong>"。三线图是这个路线最直接的铁证：同一个方程，三条路都能解——传统路给你"可信的参照"，PINN 路给你"数据+方程协同的新玩法"。B5 就是让两条轨在这张图上<strong>正式碰头</strong>。</p>
+
+<h2>2 · 用 FDM 解振子（调用你 A 轨的积累）</h2>
+
+<p>振子是二阶常微分方程 $m\ddot{x}+\mu\dot{x}+kx=0$。把它写成两个一阶方程（标准做法，用你 0005/0006 的差分直觉）：</p>
+
+$$
+\begin{cases}
+\dot{x} = v \\
+\dot{v} = -\frac{\mu}{m}v - \frac{k}{m}x
+\end{cases}
+$$
+
+<p>用简单显式 Euler/中心差分推进即可。你已有 A 轨功底，这里给一个可直接跑的最小实现（自 0006 的时间推进思路）：</p>
+
+<pre><code>import numpy as np
+d, w0 = 2., 20.
+mu, k = 2*d, w0**2        # 和 B4 相同的参数
+
+T, dt = 1.0, 0.001        # 时间窗 1.0，步长 0.001
+nt = int(T/dt)
+x = np.zeros(nt+1); v = np.zeros(nt+1)
+x[0] = 1.0                # 初始位置 1，初始速度 0
+
+for n in range(nt):                       # 前向 Euler（A 轨同款时间推进）
+    x[n+1] = x[n] + dt*v[n]
+    v[n+1] = v[n] + dt*(-mu*v[n] - k*x[n])
+
+t_fdm = np.linspace(0, T, nt+1)</code></pre>
+
+<div class="box">
+<span class="box-title">◆ 误差来源（本课检查点重点）</span>
+FDM 误差=截断误差（O(Δt)），步长越小越准，且完全确定（无随机）；PINN 误差=优化误差（训练没完全收敛、有限网络容量、损失平衡），有随机性（不同初始化/种子）。这是"传统 vs 神经网络"误差哲学的根本差别。
+</div>
+
+<h2>3 · 拼出三线图</h2>
+
+<pre><code>import matplotlib.pyplot as plt
+
+# 解析解（B1/B2 的 oscillator，torch 张量）
+t_an = x_full.numpy()  # 或用 np 版本重建，端点一致即可
+u_an = y_true.numpy()
+
+# FDM
+u_fdm = x            # 上面的 numpy 数组
+
+# PINN（B4 训练好的 model）
+with torch.no_grad():
+    u_pinn = model(t_eval).numpy()   # t_eval 是测试网格
+
+plt.figure(figsize=(9,4))
+plt.plot(t_an,  u_an,   'k-',  lw=2, label='Analytical')
+plt.plot(t_fdm, u_fdm,  'b--', lw=2, label='FDM (Euler)')
+plt.plot(t_eval, u_pinn, 'r:',  lw=2, label='PINN')
+plt.xlabel('t'); plt.ylabel('u(t)')
+plt.legend()
+plt.title('Damped oscillator: Analytical vs FDM vs PINN')</code></pre>
+
+<p>预期：三条线在中段高度重合；细看能在 FDM（随 t 轻微衰减偏差）和 PINN（可能在小幅抖动）上找到各自的特征——它们正是误差来源的"指纹"。</p>
+
+<h2>4 · 必做实验</h2>
+
+<p><strong>实验 1</strong>：把 FDM 步长从 0.001 改成 0.01、0.1，观察蓝线如何偏离灰线（截断误差 vs 步长关系）。这直接对应 0004 CFL 那节的"dt 越小越准"。</p>
+
+<p><strong>实验 2</strong>：把 PINN 的物理权重改回 1e-7（回忆 B4 实验 C），红线会怎样？——固化"优化误差=没物理=外推崩"的连接。</p>
+
+<p><strong>实验 3（交付）</strong>：画两张图保存到 <code>results/</code>：① 三线对比（本课）；② 单独 FDM vs 解析（误差放大，看 O(Δt) 趋势）。这俩就是你的第一款"科研图"。</p>
+
+<h2>5 · 检查点：闭卷自测</h2>
+
+<details class="quiz"><summary>Q1 · FDM 与 PINN 的误差来源分别是什么？</summary>
+<div class="a">FDM：截断误差（离散化近似，O(Δt)/O(Δx)），确定性、可通过加密网格消除；PINN：优化误差（有限容量、未完全收敛、损失平衡不当），随机性取决于训练过程。</div></details>
+
+<details class="quiz"><summary>Q2 · 为什么 FDM 步长减半误差约减半？</summary>
+<div class="a">一阶前向 Euler 截断误差 O(Δt)：步长除以 2，单步局部误差约减一半（全局累积也按线性趋势下降）。这是"收敛阶"的直观版（对应术语表"收敛阶"条）。</div></details>
+
+<details class="quiz"><summary>Q3 · 为什么 PINN 这次能外推出数据区以外的 2.6 个周期？</summary>
+<div class="a">物理损失把方程残差压到接近 0，网络学到的是"满足方程的解"而不是"记住 10 个点"；方程本身决定了 t&gt;0.4 的形状，所以外推不再是盲猜。B4 已证明，本课是它的宏观证据。</div></details>
+
+<details class="quiz"><summary>Q4 · 这张三线图对"课程价值"有什么价值？（开放题）</summary>
+<div class="a">参考要点：它实证你在两个世界都能解题——FDM 给基准与物理保真，PINN 给数据驱动与参数反演能力；"先基准后 SciML"不是口号是你能画出来的图。组会/PS 里讲"我在同一问题上对照了经典数值与物理信息机器学习"——有图有真相。</div></details>
+
+<details class="quiz"><summary>Q5（费曼）· 三句话说明白为什么"同一个方程需要三条路"。</summary>
+<div class="a">解析解：只有极少数方程存在，但精度完美（裁判）。FDM：通用、可靠、可收敛到大网格精度（基准）。PINN：数据+方程协同、可反演参数、适合缺数据/高维（扩展性）。三条路各自有用，三线图中看分工。</div></details>
+
+<h2>6 · 收尾（A+B 全程完成）</h2>
+
+<p>合上讲义，默写本课 FDM 求解 + 三线绘图（第 2 遍）。完成后，你手上有：</p>
+
+<div class="box">
+<span class="box-title">🎓 双轨课程毕业清单</span>
+□ A 轨：手写 FDM 解过 对流→扩散→Burgers(1D/2D)→Laplace/Poisson→NS(腔流/通道流) （0002–0010）<br>
+□ B 轨：谐振子 PINN 从概念到训练到外推（0011–0014）<br>
+□ 收官：解析/FDM/PINN 三线对比图（本课）——可放进 GitHub、简历和组会<br>
+建议下一步（与课程学习目标衔接）：① 给 FDM 代码建 GitHub 仓库（README + solver.py）；② 若有余力，把 PINN 换到 Burgers（同一方程再对一次，真正做 SciML 论文里那种基准）。
+</div>
+
+<div class="box">
+<span class="box-title">◆ 一手来源</span>
+三线对比是双轨课程的原创设计（基于 Barba CFDPython + Moseley PINN 两个官方教材）。FDM 部分可对照：Anderson《Computational Fluid Dynamics》第 2 章稳定与精度。<br>
+所有课程与术语表：<a href="../reference/glossary.html">GLOSSARY</a>；资源清单：<a href="../RESOURCES.md">RESOURCES</a>。
+</div>
+
+<footer class="lesson-foot">
+  <div class="nav">
+    <span><a href="0014-b4-pinn-full.html">← 0014 B4 PINN</a></span>
+    <span><a href="../reference/glossary.html">术语表</a></span>
+    <span>← 返回 <a href="../MISSION.md">MISSION</a></span>
+  </div>
+  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0015 课（收官）· 2026-09-11</p>
+</footer>
+
+</div>
+</body>
+</html>

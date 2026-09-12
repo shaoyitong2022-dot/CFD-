@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>0013 · B3 autograd 与物理损失</title>
+<link rel="stylesheet" href="../assets/course.css">
+<script>
+MathJax = { tex: { inlineMath: [['$', '$']] } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+<div class="page">
+
+<header class="lesson-head">
+  <p class="kicker">Lesson 0013 · Phase B 核心课</p>
+  <h1>B3 · torch.autograd 与物理损失：PINN 的引擎</h1>
+  <p class="meta">预计 60 分钟（本课最慢最细，值得）｜ 教材：官方 notebook 的 "PINN" 段 ｜ <a href="0012-b2-bare-nn-training.html">← 前置 B2</a> ｜ <a href="../reference/glossary.html">术语表</a></p>
+</header>
+
+<div class="win">
+  <span class="box-title">✦ 今日战果（Phase B 的灵魂）</span>
+  ① 独立写出对 nn 输出求<strong>一阶、二阶导</strong>的 autograd 代码，并理解 `requires_grad_` 和 `create_graph=True` 的含义；<br>
+  ② 把 $m\ddot{x}+\mu\dot{x}+kx$ 变成一行"残差"，并写出物理损失——<strong>这就是课程主线中的『熟练 autograd』的那几行</strong>；<br>
+  ③ 用手算验证：当解恰好满足方程时，物理损失为 0。
+</div>
+
+<h2>1 · 为什么 PINN 需要"对输入求导"</h2>
+
+<p>物理损失的想法：把网络输出 $u(t)$ 当成"试探解"，代入微分方程。方程右边应该等于 0；网络输出越接近真解，代入后的<strong>残差</strong>越接近 0。但残差里含 $\ddot{x}=d^2 u_{\text{NN}}/dt^2$——我们要对神经网络的<strong>输入 t</strong> 求二阶导。这正是 PyTorch 自动微分在 PINN 里的用武之地：</p>
+
+$$
+r(t) = m\frac{d^2 u_{\text{NN}}}{dt^2} + \mu\frac{du_{\text{NN}}}{dt} + k\,u_{\text{NN}}(t), \qquad \text{loss}_{\text{physics}}=\frac1{30}\sum r(t_j)^2
+$$
+
+<div class="box">
+<span class="box-title">◆ 这和你 FDM 的"残差"是一回事</span>
+在 A 轨你把离散格式代进方程看"没被满足的部分"；这里是把神经网络的输出代进方程看"没满足的部分"。只是求导方式从差分模板换成了自动微分。两种世界观、同一个词：residual。
+</div>
+
+<h2>2 · 热身：对一个 sin(x) 求导（自己先来，别抄）</h2>
+
+<p>把 autograd 单独拎出来练，不要直接跳进振子。新建 notebook，手打：</p>
+
+<pre><code>import torch
+
+x = torch.linspace(0, 2*torch.pi, 100, requires_grad=True)  # ← 关键1：对 x 记录梯度
+y = torch.sin(x)          # 我们要对 y 关于 x 求导
+
+dy = torch.autograd.grad(y, x, torch.ones_like(y), create_graph=True)[0]
+#   ↑ 输出          ↑ 输入   ↑ 每个输出的权(全1)       ↑ 保留计算图以便再求导！
+#   返回一个元组，[0] 取第一个 = dy/dx
+
+print(torch.max(torch.abs(dy - torch.cos(x))))   # 与解析 cos(x) 比，误差应 ~1e-6 或更小</code></pre>
+
+<table>
+  <tr><th>参数</th><th>作用</th><th>忘了会怎样</th></tr>
+  <tr><td><code>requires_grad=True</code></td><td>告诉 torch"这个张量的梯度要记录"，前向时构建计算图</td><td>autograd 报"它不需要梯度"</td></tr>
+  <tr><td><code>torch.ones_like(y)</code></td><td>给每个输出分量权重 1（求"之和对各 x 的偏导"）</td><td>缺了会求错量或报错</td></tr>
+  <tr><td><code>create_graph=True</code></td><td>把求导过程也记进计算图，使结果<strong>还能再求导</strong>（二阶导必需）</td><td>算二阶导时报错</td></tr>
+  <tr><td><code>[0]</code></td><td>autograd.grad 返回元组，取第一个</td><td>忘取 [0] 会拿到元组</td></tr>
+</table>
+
+<h3>现在求二阶导（重点看 chain）</h3>
+
+<pre><code>dy = torch.autograd.grad(y, x, torch.ones_like(y), create_graph=True)[0]   # 一阶：带图
+d2y = torch.autograd.grad(dy, x, torch.ones_like(dy), create_graph=True)[0] # 对一阶再求 = 二阶
+
+print(torch.max(torch.abs(d2y - (-torch.sin(x)))))   # 对照 -sin(x)</code></pre>
+
+<div class="box">
+<span class="box-title">◆ 为什么二阶导慢？</span>
+每加一次 create_graph=True 的 grad，计算图就多一层。求 d²u/dt² 等于连推两次链式法则，代价随网络层数非线性增长。20000 步 × 两个 grad，就是 PINN 训练慢的根源。但活在精度：自动微分是精确的，没有差分模板的截断误差。
+</div>
+
+<h2>3 · 逐行注释：官方物理损失五行（核心中的核心）</h2>
+
+<pre><code>x_physics = torch.linspace(0, 1, 30).view(-1, 1).requires_grad_(True)
+#           物理采样点：全域 30 个、不含答案，只用来算残差
+#           关键：物理点也要 requires_grad_，才能对 t 求导
+
+mu, k = 2*d, w0**2          # 方程参数：μ=2δ=4, k=ω0²=400（回忆 B1 的 δ、ω0）
+
+model = FCN(1, 1, 32, 3)    # 新模型，重新训练
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+
+for i in range(20000):
+    optimizer.zero_grad()
+
+    # ==== 数据损失（同 B2）====
+    yh = model(x_data)
+    loss1 = torch.mean((yh - y_data)**2)
+
+    # ==== 物理损失（本课主角）====
+    yhp = model(x_physics)                                  # 网络在物理点上输出 u(t_j)
+    dx  = torch.autograd.grad(yhp, x_physics, torch.ones_like(yhp), create_graph=True)[0]
+    #   一阶导 du/dt
+    dx2 = torch.autograd.grad(dx, x_physics, torch.ones_like(dx), create_graph=True)[0]
+    #   二阶导 d²u/dt²（对一阶再求一次）
+
+    physics = dx2 + mu * dx + k * yhp        # 残差 r = d²u/dt² + μ du/dt + k u
+    loss2 = (1e-4) * torch.mean(physics**2)  # 加权物理损失：残差平方和均值 × 权重
+
+    loss = loss1 + loss2     # 总损失
+    loss.backward()
+    optimizer.step()</code></pre>
+
+<table>
+  <tr><th>行</th><th>干什么</th><th>对应</th></tr>
+  <tr><td><code>x_physics = ...requires_grad_(True)</code></td><td>物理采样点，标记可导</td><td>对这些点求导才能算残差</td></tr>
+  <tr><td><code>mu, k = 2*d, w0**2</code></td><td>由 δ、ω₀ 反推 μ、k</td><td>$2\delta=\mu/m$、$\omega_0^2=k/m$（取 m=1）</td></tr>
+  <tr><td><code>dx = grad(yhp, x_physics, ...)[0]</code></td><td>一阶导 du/dt（30 点批量）</td><td>autograd 在整批物理点上导</td></tr>
+  <tr><td><code>dx2 = grad(dx, ...)[0]</code></td><td>二阶导 d²u/dt²</td><td>对一阶导再求一次，链式顺下去</td></tr>
+  <tr><td><code>physics = dx2 + mu*dx + k*yhp</code></td><td>方程残差</td><td>$r = m\ddot{x}+\mu\dot{x}+kx$（m=1）</td></tr>
+  <tr><td><code>loss2 = 1e-4 * mean(physics²)</code></td><td>加权物理损失</td><td>1e-4 是权重（B4 讲为何这么小）</td></tr>
+</table>
+
+<div class="box">
+<span class="box-title">◆ 权重 1e-4 的问题，先埋着，B4 收</span>
+数据损失量级 ~O(1)（u~1），残差平方可能 O(10²~10⁴)（二阶导可大）。所以物理项乘 1e-4 让两项"势均力敌"。这个"损失平衡"是 PINN 的著名玄学，B4 有专门实验。
+</div>
+
+<h2>4 · 手算自验：物理损失 = 0 的含义</h2>
+
+<p>如果网络输出正是解析解 $u(t)=e^{-\delta t}2A\cos(\phi+\omega t)$，代入 $r=d^2u/dt^2+\mu\,du/dt+k u$ 应该恒等于 0（这是方程本身）。所以：</p>
+<ul>
+  <li>损失=0 ⇔ 网络解满足方程（在所有物理采样点上）；</li>
+  <li>PINN 训练 = 把"方程必须满足"当软约束，网络为了压低 loss2 会自动学会振荡。</li>
+</ul>
+
+<p>课上你可以用一个手算验证<strong>对</strong>：把 $u(t)=\cos(\omega_0 t)$（无阻尼、$\delta=0$）代入：$d^2u/dt^2=-\omega_0^2 u$，于是 $r=-\omega_0^2u + \omega_0^2 u=0$ ✓。体会"代入即 0"的代数事实。</p>
+
+<h2>5 · 必做实验</h2>
+
+<p><strong>实验 1（核心自验）</strong>：跑 sin(x) 热身，确认一阶、二阶导误差都 ~1e-6 以内（对照解析值）。若差很远，检查参数——尤其 `create_graph`。</p>
+
+<p><strong>实验 2（破坏性诊断）</strong>：把 <code>create_graph=True</code> 去掉重跑，观察报错（"a leaf Variable..." 或 "Trying to backward twice"）。记录报错文本——理解"为什么二阶导必须带图"。</p>
+
+<p><strong>实验 3（观察权重）</strong>：跑通官方 PINN 段（20000 步可能较慢，可先 5000 步试试），看到网络在 t∈[0,1] 全域贴合解析解——断层消失了！这就是物理损失救场。若时间紧，本实验放 B4 正式做。</p>
+
+<h2>6 · 检查点：闭卷自测</h2>
+
+<details class="quiz"><summary>Q1 · 为什么求二阶导必须 create_graph=True？</summary>
+<div class="a">默认 autograd 求完就把计算图释放了；第二次求导需要对"第一次求导的结果"继续求导，必须保留图（create_graph=True）才能继续链式。删掉它，二阶导直接报错。</div></details>
+
+<details class="quiz"><summary>Q2 · x_physics 和 x_data 有什么区别？各自在损失里扮演什么？</summary>
+<div class="a">x_data=10 个带真值的观测点 → 数据损失；x_physics=30 个无真值的全域点 → 只算残差进物理损失。物理点是"给方程当考场的点"，不需要答案。</div></details>
+
+<details class="quiz"><summary>Q3 · physics = dx2 + mu*dx + k*yhp 每一段对应方程哪一项？</summary>
+<div class="a">dx2=d²u/dt²（惯性），mu*dx=μ du/dt（阻尼），k*yhp=k u（弹性回复）。合起来正是 $m\ddot{x}+\mu\dot{x}+kx$（m=1）。</div></details>
+
+<details class="quiz"><summary>Q4 · 为什么物理损失用残差平方的均值（mean）？</summary>
+<div class="a">残差可正可负，平方保证非负；mean 让损失不受采样点数影响（换 30/60 个物理点，损失尺度一致），且平方对大残差惩罚更重——引导网络把每点的残差都压小。</div></details>
+
+<details class="quiz"><summary>Q5（费曼）· 向完全没学过 autograd 的同学解释 "create_graph"</summary>
+<div class="a">普通求导像"用一次就撕掉的草稿纸"；create_graph=True 相当于"把草稿纸也复印留底"，这样你还能在草稿纸（一阶导）上再求一次导。PINN 要二阶导，所以每一层都得留底。</div></details>
+
+<h2>7 · 默写任务（第 2 遍，必做）</h2>
+
+<p>合上讲义，从零默写 sin(x) 热身 + 官方物理损失五行（模型类可参考 B2 但也要默写）。卡壳处=薄弱点，标错题回来。<br><strong>本课是全 Phase B 的钥匙，宁可多花一小时也要把它写透。</strong></p>
+
+<div class="box">
+<span class="box-title">◆ 一手来源</span>
+Moseley <code>harm-osc PINN.ipynb</code> 的后半段（"PINN" 小节）。<br>
+更系统的 autograd 讲解（若想深挖）：PyTorch 官方 <a href="https://pytorch.org/tutorials/beginner/basics/autogradqs_tutorial.html">autograd 教程</a>。
+</div>
+
+<footer class="lesson-foot">
+  <div class="nav">
+    <span><a href="0012-b2-bare-nn-training.html">← 0012 B2 裸NN</a></span>
+    <span><a href="../reference/glossary.html">术语表</a></span>
+    <span>下一课：0014 · B4 PINN 全流程</span>
+  </div>
+  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0013 课 · 2026-09-11</p>
+</footer>
+
+</div>
+</body>
+</html>

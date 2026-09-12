@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>0008 · Step 7+8 二维扩散与二维 Burgers</title>
+<link rel="stylesheet" href="../assets/course.css">
+<script>
+MathJax = { tex: { inlineMath: [['$', '$']] } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+<div class="page">
+
+<header class="lesson-head">
+  <p class="kicker">Lesson 0008 · Phase A 第 6 课</p>
+  <h1>Step 7+8 · 二维扩散与二维 Burgers：你的 Burgers 主线 FDM 基准</h1>
+  <p class="meta">预计 50–60 分钟 ｜ 教材：<code>code\cfdpython-repo\lessons\09_Step_7.ipynb</code> 与 <code>10_Step_8.ipynb</code> ｜ <a href="0007-step5-6-2d-convection.html">← 前置 0007</a></p>
+</header>
+
+<div class="win">
+  <span class="box-title">✦ 今日战果</span>
+  ① 把一维扩散公式推广到二维（两个二阶导相加），并掌握 2D 扩散的稳定取法（含 <code>dx*dy</code> 组合）；<br>
+  ② 完成 Step 8：二维 Burgers 方程（非线性对流 + 扩散全耦合）——<strong>你的 Burgers 主线 FDM 基准至此成型</strong>。
+</div>
+
+<h2>1 · Step 7：二维扩散</h2>
+
+<p>方程：</p>
+
+$$
+\frac{\partial u}{\partial t} = \nu\frac{\partial^2u}{\partial x^2} + \nu\frac{\partial^2u}{\partial y^2}
+$$
+
+<p>二阶导在二维照搬一维中心差分（0005 学的模板），x、y 各来一遍相加：</p>
+
+$$
+u_{i,j}^{n+1} = u_{i,j}^n + \frac{\nu\Delta t}{\Delta x^2}(u_{i+1,j}^n-2u_{i,j}^n+u_{i-1,j}^n) + \frac{\nu\Delta t}{\Delta y^2}(u_{i,j+1}^n-2u_{i,j}^n+u_{i,j-1}^n)
+$$
+
+<h3>稳定取法（区别于 1D）</h3>
+<p>2D 扩散的稳定边界更紧，官方便捷取法：</p>
+
+$$
+\sigma = \frac{\nu \Delta t}{\Delta x\,\Delta y} \le \frac14 \quad(\text{官方取 }0.25),\qquad
+\Delta t = \sigma\frac{\Delta x\,\Delta y}{\nu}
+$$
+
+<div class="box">
+<span class="box-title">◆ 2D 的稳定"变严"来自两个方向同时扩散</span>
+一维是 $\frac{\nu\Delta t}{\Delta x^2}\le\frac12$；到 2D 每方向都扩散，允许的 $\Delta t$ 更小。官方代码直接 <code>dt = sigma * dx * dy / nu</code>（注意是 dx*dy 的分子组合）。看到这个式子，就认出这是"2D 扩散版稳定取法"。
+</div>
+
+<h3>逐行注释：官方向量版核心</h3>
+
+<pre><code>nx = 31; ny = 31; nt = 17; nu = .05
+dx = 2/(nx-1); dy = 2/(ny-1)
+sigma = .25
+dt = sigma * dx * dy / nu    # 2D 扩散稳定取法
+
+u = numpy.ones((ny,nx)); un = numpy.ones((ny,nx))
+u[int(.5/dy):int(1/dy+1), int(.5/dx):int(1/dx+1)] = 2   # 帽子
+
+def diffuse(nt):                     # 官方封装成函数，便于多次调用
+    u[int(.5/dy):int(1/dy+1), int(.5/dx):int(1/dx+1)] = 2  # reset 初始帽子
+    for n in range(nt + 1):
+        un = u.copy()
+        # x 方向二阶导 + y 方向二阶导
+        u[1:-1, 1:-1] = (un[1:-1,1:-1] +
+                        nu * dt / dx**2 * (un[1:-1, 2:] - 2*un[1:-1,1:-1] + un[1:-1, 0:-2]) +
+                        nu * dt / dy**2 * (un[2:,1:-1] - 2*un[1:-1,1:-1] + un[0:-2,1:-1]))
+        # ↑内部区        ↑旧值            ↑x 二阶差分模板（右-2中+左）       ↑y 二阶差分模板（下-2中+上）
+        u[0,:]=1; u[-1,:]=1; u[:,0]=1; u[:,-1]=1   # 四边固定 1
+    return u   # 然后 3D 画图见官方（meshgrid + plot_surface）</code></pre>
+
+<table>
+  <tr><th>切片</th><th>含义</th></tr>
+  <tr><td><code>un[1:-1, 2:]</code></td><td>去掉首尾行、去掉前两列 = "右邻居"区（i+1）</td></tr>
+  <tr><td><code>un[1:-1, 0:-2]</code></td><td>去掉首尾行、去掉后两列 = "左邻居"区（i-1）</td></tr>
+  <tr><td><code>un[2:, 1:-1]</code></td><td>去掉前两行、去掉首尾列 = "下邻居"区（j+1）</td></tr>
+  <tr><td><code>un[0:-2, 1:-1]</code></td><td>去掉后两行、去掉首尾列 = "上邻居"区（j-1）</td></tr>
+</table>
+
+<p><code>u[1:-1, 1:-1]</code> 是"去掉四边后的内部"，更新的正好是它——四边留给边界赋值。对照模板：中心系数 -2（两个 <code>2*un[1:-1,1:-1]</code>），一个来自 x、一个来自 y。</p>
+
+<p>官方调用 <code>diffuse(10)、diffuse(14)、diffuse(50)</code>，你会看到帽子随时间被抹平、慢慢变成整片 1——二维的"盒子里的墨迹扩散"。</p>
+
+<h2>2 · Step 8：二维 Burgers（里程碑）</h2>
+
+<p>这就是"把 0006 的一维 Burgers（对流+扩散）变成二维 + u/v 两分量"。它的重要性在官方原话里说得很清楚：<em>"contains the full convective nonlinearity of the flow equations"</em>——你把流体微元的"自我对流 + 自身扩散"全都解过了。</p>
+
+<p>耦合方程组（u、v 各自满足 Burger 型）——只写 u 的更新公式：</p>
+
+$$
+\begin{split}
+u_{i,j}^{n+1} = u_{i,j}^n &- \frac{\Delta t}{\Delta x}u_{i,j}^n(u_{i,j}^n-u_{i-1,j}^n) - \frac{\Delta t}{\Delta y}v_{i,j}^n(u_{i,j}^n-u_{i,j-1}^n)\\
+&+ \frac{\nu\Delta t}{\Delta x^2}(u_{i+1,j}^n-2u_{i,j}^n+u_{i-1,j}^n) + \frac{\nu\Delta t}{\Delta y^2}(u_{i,j+1}^n-2u_{i,j}^n+u_{i,j-1}^n)
+\end{split}
+$$
+
+<p>它的代码 = 0007 的耦合对流 + 0007 的二维扩散，拼起来。这一课你其实是"组装旧零件"，不是学新概念——这正是官方说的 code reuse。</p>
+
+<h3>逐行注释：官方向量版核心</h3>
+
+<pre><code>nx = 41; ny = 41; nt = 120
+dx = 2/(nx-1); dy = 2/(ny-1)
+sigma = .0009;  nu = 0.01
+dt = sigma * dx * dy / nu    # 注意：这里按 2D 扩散的稳定取法
+
+u = numpy.ones((ny,nx)); v = numpy.ones((ny,nx))
+un = numpy.ones((ny,nx)); vn = numpy.ones((ny,nx))
+u[int(.5/dy):int(1/dy+1), int(.5/dx):int(1/dx+1)] = 2   # u 帽子
+v[int(.5/dy):int(1/dy+1), int(.5/dx):int(1/dx+1)] = 2   # v 帽子
+
+for n in range(nt + 1):
+    un = u.copy(); vn = v.copy()
+
+    u[1:-1, 1:-1] = (un[1:-1, 1:-1] -                    # 旧值 u^n
+                     dt/dx * un[1:-1,1:-1] * (un[1:-1,1:-1] - un[1:-1, 0:-2]) -   # x 非线性对流
+                     dt/dy * vn[1:-1,1:-1] * (un[1:-1,1:-1] - un[0:-2,1:-1]) +    # y 非线性对流
+                     nu*dt/dx**2 * (un[1:-1,2:] - 2*un[1:-1,1:-1] + un[1:-1,0:-2]) +  # x 扩散
+                     nu*dt/dy**2 * (un[2:,1:-1] - 2*un[1:-1,1:-1] + un[0:-2,1:-1]))   # y 扩散
+
+    # v 方程：把上面 5 项里的"被搬运/被扩散的量"换 v 即可
+    v[1:-1, 1:-1] = (vn[1:-1, 1:-1] -
+                     dt/dx * un[1:-1,1:-1] * (vn[1:-1,1:-1] - vn[1:-1, 0:-2]) -
+                     dt/dy * vn[1:-1,1:-1] * (vn[1:-1,1:-1] - vn[0:-2,1:-1]) +
+                     nu*dt/dx**2 * (vn[1:-1,2:] - 2*vn[1:-1,1:-1] + vn[1:-1,0:-2]) +
+                     nu*dt/dy**2 * (vn[2:,1:-1] - 2*vn[1:-1,1:-1] + vn[0:-2,1:-1]))
+
+    u[0,:]=1; u[-1,:]=1; u[:,0]=1; u[:,-1]=1   # u 四边固定 1
+    v[0,:]=1; v[-1,:]=1; v[:,0]=1; v[:,-1]=1   # v 四边固定 1</code></pre>
+
+<div class="box">
+<span class="box-title">◆ 一行都不改的复用清单</span>
+x 非线性对流 = 0007 的 Step 6 那项；y 非线性对流 = 0007 那项；两个扩散项 = 正是本课 Step 7 那两项。所谓"写自己的 NS 求解器"，本质就是把这几块积木按正确顺序排好——现在你手里有全部积木了。
+</div>
+
+<p>观察结果图：两个帽子在二维平面里被"冲"成团——非线性让它们变形前进，扩散让它们糊开。从初始平滑到实际成形，渐显 2D 的冲击波雏形。</p>
+
+<h2>3 · 必做实验</h2>
+
+<p><strong>实验 1</strong>：跑通 Step 7 的 <code>diffuse(10/14/50)</code>，观察帽子的三维"塌陷"过程，确认是纯抹平、不移动。</p>
+
+<p><strong>实验 2</strong>：把 Step 8 的 <code>nu</code> 从 0.01 改成 0.1（同时相应地已由 sigma 重推 dt，直接跑）。预测：帽子扩散得更快、更圆？还是保持更尖锐？运行验证。</p>
+
+<p><strong>实验 3（挑战）</strong>：在跑通 Step 8 后，把自己的一维 Burgers（0006）和二维 Burgers 对比输出图，写一两句"多了一个方向发生了什么"——这是你 Burgers 主线的收尾思考。</p>
+
+<h2>4 · 检查点：闭卷自测</h2>
+
+<details class="quiz"><summary>Q1 · 2D 扩散稳定取法（用 σ 表示 dt）与 1D 有何不同？</summary>
+<div class="a">2D：$\Delta t = \sigma\frac{\Delta x\,\Delta y}{\nu}$（σ 取 0.25，安全域）；1D：$\Delta t = \sigma\frac{\Delta x^2}{\nu}$（σ 取 0.2）。差别在分子 $\Delta x\Delta y$ vs $\Delta x^2$——2D 两个方向同时扩散，时间步要更保守。</div></details>
+
+<details class="quiz"><summary>Q2 · 二维二阶差分模板把 -2 出现在哪里？为什么？</summary>
+<div class="a">x、y 两个方向各自模板的中间项都含 $-2u_{i,j}$，加起来出现 $2\times(-2u_{i,j})$=-4 对中心——不，精确说是两个独立的 -2 各自贡献一次（代码里两个 <code>2*un[1:-1,1:-1]</code>）。看到两个 <code>-2*中心</code> 就是二维二阶导的签名。</div></details>
+
+<details class="quiz"><summary>Q3 · Step 8 的 u 更新公式里，哪些项用 un、哪些用 vn？为什么？</summary>
+<div class="a">x 方向自身搬运用 un（速度=u），y 方向被 v 搬运用 vn，两个扩散项也都用 un（被扩散的是 u 本身）。v 方程同理倒过来。用哪份快照取决于"谁是搬运者、谁是被搬运的量"。</div></details>
+
+<details class="quiz"><summary>Q4 · 为什么 Step 8 的 dt 用扩散稳定取法（dx*dy分子）而不是对流 CFL？</summary>
+<div class="a">Step 8 同时含对流和扩散两项；显式格式的时间步要同时满足两者。实际操作中按较"严"的那个取（扩散的分子 dx*dy 的保守式），官方 <code>sigma=.0009</code> 把 dt 取得很小，安全。</div></details>
+
+<details class="quiz"><summary>Q5（费曼）· 一句话说清"二维 Burgers 比一维多了什么"到只懂一维的同学。</summary>
+<div class="a">参考表述：一维只有"沿一根线的自己冲自己"，二维变成一片液态表面，每个方向都有场把自己推着走，还互相交叉搬运（v 推 u、u 推 v），同时向四面八方扩散。物理上就是"水流"的骨架。</div></details>
+
+<h2>5 · 默写任务（第 2 遍，必做）</h2>
+
+<p>合上讲义，<strong>先默写 Step 7（扩散+2D 稳定 dt）</strong>，再在跑通基础上直接改成 Step 8（复制 u 方程改 v）。这里最容易卡的是向量化切片，卡住务必标错题。</p>
+
+<div class="box">
+<span class="box-title">◆ 里程碑确认</span>
+至此，你完成了完整的 Burgers 主线（1D + 2D）。这对应课程主线中"手写 FDM 出基准"的核心交付。建议把 0008 的最终图保存到一个 <code>results/</code> 文件夹，后续 Phase B 的三线对比要引用它。
+</div>
+
+<div class="box">
+<span class="box-title">◆ 一手来源</span>
+Barba &amp; Forsyth, <em>CFD Python</em>, Step 7（09）/ Step 8（10）。配套视频：<strong>Video Lesson 6</strong>（Step 5–8）：<a href="https://youtu.be/tUg_dE3NXoY">youtube</a>。
+</div>
+
+<footer class="lesson-foot">
+  <div class="nav">
+    <span><a href="0007-step5-6-2d-convection.html">← 0007 Step 5+6</a></span>
+    <span><a href="../reference/glossary.html">术语表</a></span>
+    <span>下一课：0009 · Step 9+10 Laplace 与 Poisson</span>
+  </div>
+  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0008 课 · 2026-09-11</p>
+</footer>
+
+</div>
+</body>
+</html>

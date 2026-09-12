@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>0009 · Step 9+10 Laplace 与 Poisson</title>
+<style>
+/* CFDPython 双轨课程共享样式表 —— 所有课页与参考页统一引用 */
+:root {
+  --ink: #1f2328;
+  --paper: #fffdf7;
+  --soft: #f6f4ec;
+  --accent: #0f6b6b;        /* 主强调：深青 */
+  --accent-2: #b3541e;      /* 次强调：赭橙 */
+  --line: #d8d2c2;
+  --code-bg: #f4f2ea;
+  --muted: #6e6a5e;
+  --serif: "Source Han Serif SC", "Noto Serif SC", "Songti SC", Georgia, serif;
+  --sans: "Source Han Sans SC", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --mono: "Cascadia Code", Consolas, "JetBrains Mono", monospace;
+}
+
+* { box-sizing: border-box; }
+
+html { font-size: 17px; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  line-height: 1.85;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 5rem;
+}
+
+/* ---------- 头部 ---------- */
+header.lesson-head {
+  border-bottom: 3px double var(--line);
+  padding-bottom: 1.2rem;
+  margin-bottom: 2.2rem;
+}
+.kicker {
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin: 0 0 0.5rem;
+}
+h1 {
+  font-size: 1.9rem;
+  line-height: 1.3;
+  margin: 0 0 0.6rem;
+  font-weight: 700;
+}
+.meta {
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.meta a { color: var(--accent); text-decoration: none; }
+.meta a:hover { text-decoration: underline; }
+
+/* ---------- 正文 ---------- */
+h2 {
+  font-size: 1.28rem;
+  margin: 2.6rem 0 0.9rem;
+  padding-left: 0.65rem;
+  border-left: 4px solid var(--accent);
+}
+h3 { font-size: 1.05rem; margin: 1.8rem 0 0.6rem; }
+
+p { margin: 0.9rem 0; }
+
+a { color: var(--accent); }
+a:hover { color: var(--accent-2); }
+
+strong { font-weight: 700; }
+
+/* ---------- 代码 ---------- */
+code {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  background: var(--code-bg);
+  padding: 0.12em 0.4em;
+  border-radius: 3px;
+  border: 1px solid var(--line);
+}
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 4px;
+  padding: 1rem 1.2rem;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.86rem;
+}
+.cm { color: #8a8577; font-style: italic; }      /* 代码注释色（教学用内联高亮） */
+
+/* ---------- 提示框 ---------- */
+.box {
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--accent-2);
+  background: var(--soft);
+  padding: 1rem 1.3rem;
+  margin: 1.6rem 0;
+  border-radius: 0 4px 4px 0;
+}
+.box .box-title {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  color: var(--accent-2);
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+/* ---------- 今日战果 ---------- */
+.win {
+  border: 2px solid var(--accent);
+  border-radius: 6px;
+  padding: 1.1rem 1.4rem;
+  margin: 1.8rem 0;
+  background: #f0f7f5;
+}
+.win .box-title { color: var(--accent); }
+
+/* ---------- 小测（检索练习） ---------- */
+details.quiz {
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: #fff;
+  margin: 1rem 0;
+  padding: 0;
+}
+details.quiz summary {
+  cursor: pointer;
+  font-family: var(--sans);
+  font-weight: 600;
+  padding: 0.8rem 1.1rem;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+details.quiz summary::before {
+  content: "▸";
+  color: var(--accent);
+  transition: transform 0.15s;
+}
+details.quiz[open] summary::before { transform: rotate(90deg); }
+details.quiz .a {
+  padding: 0.3rem 1.4rem 1rem;
+  border-top: 1px dashed var(--line);
+  color: #33413b;
+}
+details.quiz .a::before {
+  content: "答案";
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  color: var(--accent);
+  display: block;
+  margin-top: 0.6rem;
+}
+
+/* ---------- 术语表 ---------- */
+dl.gloss dt {
+  font-family: var(--sans);
+  font-weight: 700;
+  color: var(--accent);
+  margin-top: 1.1rem;
+}
+dl.gloss dt .en { font-weight: 400; color: var(--muted); font-size: 0.85em; }
+dl.gloss dd { margin: 0.2rem 0 0 0; }
+
+/* ---------- 表格 ---------- */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.4rem 0;
+  font-family: var(--sans);
+  font-size: 0.88rem;
+}
+th, td {
+  border: 1px solid var(--line);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+th { background: var(--soft); }
+tr:nth-child(even) td { background: #fbfaf4; }
+
+/* ---------- 页脚导航 ---------- */
+footer.lesson-foot {
+  margin-top: 3.5rem;
+  padding-top: 1.2rem;
+  border-top: 3px double var(--line);
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+footer.lesson-foot .nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+footer.lesson-foot a { color: var(--accent); text-decoration: none; }
+footer.lesson-foot a:hover { text-decoration: underline; }
+
+/* ---------- 平板 / 小屏适配 ---------- */
+@media (max-width: 820px) {
+  html { font-size: 16px; }
+  .page { padding: 1.5rem 1rem 3rem; }
+  h1 { font-size: 1.55rem; }
+  h2 { font-size: 1.15rem; }
+  pre {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    padding: 0.85rem 1rem;
+    -webkit-overflow-scrolling: touch;
+    overflow-x: auto;
+  }
+  code { word-break: break-word; }
+  /* 代码行内注释在窄屏不自动换行断在奇怪位置 */
+  pre code { white-space: pre; }
+  table { font-size: 0.8rem; }
+  th, td { padding: 0.4rem 0.5rem; }
+  .box, .win { padding: 0.9rem 1.1rem; }
+  footer.lesson-foot .nav { flex-direction: column; gap: 0.4rem; }
+}
+
+/* ---------- 打印 ---------- */
+@media print {
+  body { background: #fff; font-size: 11pt; }
+  .page { max-width: none; padding: 0; }
+  details.quiz { border: 1px solid #999; }
+  details.quiz .a { display: block !important; }
+  pre { background: #fff; }
+}
+
+</style>
+<script>
+MathJax = { tex: { inlineMath: [['$', '$']] } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+<div class="page">
+
+<header class="lesson-head">
+  <p class="kicker">Lesson 0009 · Phase A 第 7 课 · 换一种问题</p>
+  <h1>Step 9+10 · Laplace 与 Poisson：迭代求解稳态场</h1>
+  <p class="meta">预计 50–60 分钟 ｜ 教材：<code>code\cfdpython-repo\lessons\12_Step_9.ipynb</code> 与 <code>13_Step_10.ipynb</code> ｜ <a href="0008-step7-8-2d-diffusion-burgers.html">← 前置 0008</a></p>
+</header>
+
+<div class="win">
+  <span class="box-title">✦ 今日战果</span>
+  ① 见识"椭圆型"问题：没有时间演化，靠<strong>迭代到收敛</strong>求稳态场（与前面的"时间推进"是两种世界观）；<br>
+  ② 会用 <strong>L1 范数收敛判据</strong>做迭代停止条件，并首次把代码<strong>函数化</strong>（plot2D / laplace2d）；<br>
+  ③ 给 Laplace 加一个源项 → Poisson。<strong>这是 Step 11 压力泊松方程的直通预告</strong>。
+</div>
+
+<h2>1 · 换个世界观：没有"时间"的方程</h2>
+
+<p>前面 8 步都是 $\partial_t u = \dots$（双曲/抛物，时间推进）。Laplace 方程没有时间：</p>
+
+$$
+\frac{\partial^2 p}{\partial x^2}+\frac{\partial^2 p}{\partial y^2}=0
+$$
+
+<p>它是<strong>椭圆型</strong>：描述的是"给定边界条件下系统的平衡态"。温度分布、静电场、不可压流场的压力——全是这类问题。没有 $p^{n+1}$ 了，解"moves toward equilibrium as iterations tend to infinity"：</p>
+
+<div class="box">
+<span class="box-title">◆ 迭代法的核心思想</span>
+不是"往前推一步"，而是"反复用邻居的平均值刷新自己"，每次迭代让场更平滑、更接近边界给出的约束，直到两次迭代几乎不再变化（收敛）就停止。第 n 次迭代在这里其实是<strong>伪时间</strong>，不是真实时间。
+</div>
+
+<h2>2 · 离散与五点模板</h2>
+
+<p>用中心差分（扩散类物理，必须中心差分——0005 讲过原因）：</p>
+
+$$
+\frac{p_{i+1,j}-2p_{i,j}+p_{i-1,j}}{\Delta x^2}+\frac{p_{i,j+1}-2p_{i,j}+p_{i,j-1}}{\Delta y^2}=0
+$$
+
+<p>解出 $p_{i,j}$（这就是迭代更新公式）：</p>
+
+$$
+p_{i,j} = \frac{\Delta y^2(p_{i+1,j}+p_{i-1,j})+\Delta x^2(p_{i,j+1}+p_{i,j-1})}{2(\Delta x^2+\Delta y^2)}
+$$
+
+<p>它有个著名的名字：<strong>五点差分算子（five-point stencil）</strong>——中心 + 上下左右，五个点决定新值。每个格点的"新值"≈ 四个邻居的加权平均。</p>
+
+<h3>边界条件（本课的初始化细节）</h3>
+<ul>
+  <li>$p=0$ 在 $x=0$；$p=y$ 在 $x=2$（右侧从 0 到 1 渐变）；</li>
+  <li>$\partial p/\partial y=0$ 在 $y=0,1$（Neumann，零梯度——用"等于相邻行"实现）。</li>
+</ul>
+
+<h2>3 · 逐行注释：官方函数版</h2>
+
+<h3>3.1 绘图函数（可复用零件）</h3>
+
+<pre><code>import numpy
+from matplotlib import pyplot, cm
+from mpl_toolkits.mplot3d import Axes3D
+%matplotlib inline
+
+def plot2D(x, y, p):                       # 三维俯视绘图函数
+    fig = pyplot.figure(figsize=(11,7), dpi=100)
+    ax = fig.add_subplot(projection='3d')  # 新 matplotlib 写法（旧 gca(projection='3d') 已废弃）
+    X, Y = numpy.meshgrid(x, y)
+    surf = ax.plot_surface(X, Y, p[:], rstride=1, cstride=1,
+                           cmap=cm.viridis, linewidth=0, antialiased=False)
+    ax.set_xlim(0,2); ax.set_ylim(0,1)
+    ax.view_init(30, 225)                  # 视角（俯仰角 30°、绕 z 转 225°）
+    ax.set_xlabel('$x$'); ax.set_ylabel('$y$')</code></pre>
+
+<h3>3.2 求解函数：迭代到 L1 收敛</h3>
+
+<pre><code>def laplace2d(p, y, dx, dy, l1norm_target):
+    l1norm = 1                          # 初始置 1，确保进入循环
+    pn = numpy.empty_like(p)            # 预分配（占位即可，下面会 copy）
+
+    while l1norm > l1norm_target:       # ← 迭代停止条件：L1 范数低于目标
+        pn = p.copy()
+        # 内部五点模板一次刷新
+        p[1:-1, 1:-1] = ((dy**2 * (pn[1:-1, 2:] + pn[1:-1, 0:-2]) +     # 上下邻居×Δy²
+                          dx**2 * (pn[2:, 1:-1] + pn[0:-2, 1:-1])) /    # 左右邻居×Δx²
+                         (2 * (dx**2 + dy**2)))
+
+        # 边界条件：每轮刷新后重新施压
+        p[:, 0] = 0          # p=0 @ x=0
+        p[:, -1] = y         # p=y @ x=2
+        p[0, :] = p[1, :]    # ∂p/∂y=0 @ y=0（Neumann：等于相邻一行）
+        p[-1, :] = p[-2, :]  # ∂p/∂y=0 @ y=1
+
+        # L1 范数：本次与上次整体差 / 上次整体量 的相对变化
+        l1norm = (numpy.sum(numpy.abs(p[:]) - numpy.abs(pn[:])) /
+                  numpy.sum(numpy.abs(pn[:])))
+
+    return p</code></pre>
+
+<table>
+  <tr><th>行</th><th>干什么</th><th>为什么</th></tr>
+  <tr><td><code>while l1norm > l1norm_target</code></td><td>只要"还变"就继续迭代</td><td>没有固定迭代次数，收敛就停——比 for nt 更贴合椭圆问题</td></tr>
+  <tr><td><code>p[1:-1,1:-1] = ...</code></td><td>五点公式整块刷新内部</td><td>读 pn（旧值）、写 p（新值）——和前面一致的"读旧写新"纪律</td></tr>
+  <tr><td><code>p[0,:] = p[1,:]</code></td><td>零梯度边界</td><td>∂p/∂y=0 用"顶行=第二行"实现，是 Neumann 的差分近似</td></tr>
+  <tr><td><code>l1norm = Σ|p|-Σ|pn| / Σ|pn|</code></td><td>相对 L1 变化率</td><td>衡量"场整体变了多少"。官方 target 用 1e-4</td></tr>
+</table>
+
+<div class="box">
+<span class="box-title">◆ 为什么这个循环很慢，还能忍？</span>
+椭圆迭代每轮只把"信息"传播一格，收敛得很慢（官方原话：收敛越来越慢）。Laplace 的简单雅可比迭代是这个价；更快的 SOR / 多重网格是后话。现在重点是理解迭代框架本身。
+</div>
+
+<h2>4 · Step 10：Poisson 方程（加源项）</h2>
+
+<p>右边加一个源项 $b$：</p>
+
+$$
+\frac{\partial^2p}{\partial x^2}+\frac{\partial^2p}{\partial y^2}=b
+$$
+
+<p>离散（对应前面公式，多一项 $-b_{i,j}\Delta x^2\Delta y^2$）：</p>
+
+$$
+p_{i,j} = \frac{(p_{i+1,j}+p_{i-1,j})\Delta y^2+(p_{i,j+1}+p_{i,j-1})\Delta x^2 - b_{i,j}\Delta x^2\Delta y^2}{2(\Delta x^2+\Delta y^2)}
+$$
+
+<p><strong>源项设计</strong>：域内两个对称"尖峰" $b=+100$ 和 $b=-100$，其余 0；边界全 0。官方提示观察：<em>relaxation under Poisson slows down as they progress——为什么？</em>（因为迭代把尖峰摊开，越平变化越小，L1 变化率越小，后面每轮改善越来越微弱。）</p>
+
+<h3>逐行注释：官方 Poisson 主循环</h3>
+
+<pre><code>nx = 50; ny = 50; nt = 100
+xmin=0; xmax=2; ymin=0; ymax=1
+dx = (xmax-xmin)/(nx-1); dy = (ymax-ymin)/(ny-1)
+
+p  = numpy.zeros((ny,nx))   # 压力场初始 0
+pd = numpy.zeros((ny,nx))   # 上一轮快照
+b  = numpy.zeros((ny,nx))   # 源项场，初始 0
+x  = numpy.linspace(xmin,xmax,nx)
+y  = numpy.linspace(xmin,xmax,ny)   # 注意官方这里 y 也到 2，稍后留意
+
+# 两个对称尖峰源项
+b[int(ny/4), int(nx/4)]      = 100    # 左下角 +100
+b[int(3*ny/4), int(3*nx/4)]  = -100   # 右上角 -100
+
+for it in range(nt):                 # 伪时间迭代 100 次（写死次数）
+    pd = p.copy()
+    # 五点模板 + 源项
+    p[1:-1,1:-1] = (((pd[1:-1, 2:] + pd[1:-1, :-2]) * dy**2 +
+                     (pd[2:, 1:-1] + pd[:-2, 1:-1]) * dx**2 -
+                     b[1:-1, 1:-1] * dx**2 * dy**2) /        # ← 多了这一项
+                    (2 * (dx**2 + dy**2)))
+    # 四边全 0
+    p[0,:] = 0; p[ny-1,:] = 0; p[:,0] = 0; p[:,nx-1] = 0</code></pre>
+
+<div class="box">
+<span class="box-title">◆ 官方故意留的"歧义"</span>
+Step 10 的注释把 <code>y</code> 也 <code>linspace(xmin,xmax,ny)</code>（域到 2），而绘图时 <code>xlim 0..1</code> 是 xy 都到 2 的另一种约定——这里官方代码有点混。你跑的时候留意图形是否与预期"两个对称峰"一致即可，若视觉不对称，检查这行 <code>linspace(0,1,ny)</code> 是否写对。
+</div>
+
+<h2>5 · 必做实验</h2>
+
+<p><strong>实验 1</strong>：跑 Step 9（Laplace），把 <code>l1norm_target</code> 依次改为 1e-3、1e-4、1e-5，观察迭代次数与最终图案差别。</p>
+
+<p><strong>实验 2</strong>：跑 Step 10（Poisson），确认两个尖峰被"放松"成平滑的丘陵与洼地。观察累计到 100 步时是否完全光滑（还是接近）。</p>
+
+<p><strong>实验 3（挑战，衔接 Step 11）</strong>：把 Poisson 的右端 b 换成"散度项"（公式里那一大串），并反复迭代 50 次内部 N 子步——这就是 Step 11 里压力泊松方程的结构。先头脑里想：为什么不可压 NS 需要反复迭代 p？（提示：牛顿流体的连续性 $\nabla\cdot\vec{v}=0$ 没有显式方程，压力必须被"构造"出来保证散度为 0。官方视频 Lesson 11 讲的就是这个。）</p>
+
+<h2>6 · 检查点：闭卷自测</h2>
+
+<details class="quiz"><summary>Q1 · Laplace 与 Poisson 方程的区别是什么？写出两个方程。</summary>
+<div class="a">Poisson = Laplace + 源项：$\nabla^2 p=0$ vs $\nabla^2 p=b$。源项"放松"域内的峰，非 0 的 b 驱动压力场的不均匀。</div></details>
+
+<details class="quiz"><summary>Q2 · 五点差分模板是哪五个点？为什么是"邻居平均"？</summary>
+<div class="a">中心点 + 上、下、左、右。椭圆方程每点新值由四邻决定（各按 Δx/Δy 加权平均），对应"稳态扩散/平衡"的物理本质。</div></details>
+
+<details class="quiz"><summary>Q3 · 为什么用 while(l1norm>target) 而非固定次数？</summary>
+<div class="a">椭圆问题没有"真实时间步"，收敛与否只由"两次迭代的变化是否足够小"决定。固定次数可能迭代不足（没收敛）或浪费（早已收敛还在跑）。L1 相对变化率是官方选的收敛度量。</div></details>
+
+<details class="quiz"><summary>Q4 · 边界 ∂p/∂y=0 在代码里怎么实现？</summary>
+<div class="a">用零梯度近似：顶行等于第二行 <code>p[0,:] = p[1,:]</code>（底行同理 <code>p[-1,:]=p[-2,:]</code>）——用相邻行的值填充边界，保证沿 y 无变化。</div></details>
+
+<details class="quiz"><summary>Q5（费曼）· 为什么 Poisson 的迭代"越来越慢"？</summary>
+<div class="a">每次迭代把尖峰往四周摊一点、场越来越平。越平的地方，"这次和上次差多少"越小，L1 相对变化率越小，判断收敛的阈值越来越难达到——就像把水倒入山谷，越接近平衡水面变化越细微。</div></details>
+
+<h2>7 · 默写任务（第 2 遍，必做）</h2>
+
+<p>合上讲义，默写 <code>laplace2d</code>（含 plot2D、五点公式、边界、L1 判据），跑通 Laplace 后加源项改写成 Poisson。卡壳处=薄弱点，标记。</p>
+
+<div class="box">
+<span class="box-title">◆ 一手来源与衔接预告</span>
+Barba &amp; Forsyth, <em>CFD Python</em>, Step 9（12）/ Step 10（13）。配套视频：<strong>Video Lesson 11</strong>（为什么 CFD 需要 Poisson）：<a href="https://youtu.be/ZjfxA3qq2Lg">youtube</a>；<strong>Video Lesson 12</strong>（Laplace/Poisson 离散逐步拆解）：<a href="https://youtu.be/iwL8ashXhWU">youtube</a>。<br>
+下一课 0010 把这一切拼成最终目标：二维 NS 腔流（压力泊松+动量更新循环）。
+</div>
+
+<footer class="lesson-foot">
+  <div class="nav">
+    <span><a href="0008-step7-8-2d-diffusion-burgers.html">← 0008 Step 7+8</a></span>
+    <span><a href="../reference/glossary.html">术语表</a></span>
+    <span>下一课：0010 · Step 11+12 二维 NS 腔流/通道流</span>
+  </div>
+  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0009 课 · 2026-09-11</p>
+</footer>
+
+</div>
+</body>
+</html>

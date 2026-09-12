@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>0006 · Step 4 一维 Burgers</title>
+<link rel="stylesheet" href="../assets/course.css">
+<script>
+MathJax = { tex: { inlineMath: [['$', '$']] } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+<div class="page">
+
+<header class="lesson-head">
+  <p class="kicker">Lesson 0006 · Phase A 第 4 课 · 一维收官</p>
+  <h1>Step 4 · Burgers 方程：把对流和扩散合体</h1>
+  <p class="meta">预计 60–75 分钟（本课略长，含 Sympy 新工具与周期边界）｜ 教材：<code>code\cfdpython-repo\lessons\05_Step_4.ipynb</code> ｜ <a href="0005-step3-diffusion.html">← 前置 0005</a> ｜ <a href="../reference/glossary.html">术语表</a></p>
+</header>
+
+<div class="win">
+  <span class="box-title">✦ 今日战果</span>
+  ① 亲手解决"一维主线"的终极方程 Burgers 方程（非线性对流 + 扩散合体）——课程主线中的 Burgers 主线 FDM 基准在此刻诞生；<br>
+  ② 学会用 <strong>Sympy 做符号微分</strong>，再 <code>lambdify</code> 成可调用函数（科研里超常用的"推导交给机器"套路）；<br>
+  ③ 搞懂<strong>周期边界条件</strong>：右端出去的量从左边回来，以及它如何让"头痛"的边界在代码里露出马脚。
+</div>
+
+<h2>1 · Burgers 是什么</h2>
+
+<p>一句话：<strong>非线性对流 + 扩散</strong>，正是你学过的 Step 2 和 Step 3 的合体：</p>
+
+$$
+\frac{\partial u}{\partial t} + u\frac{\partial u}{\partial x} = \nu\frac{\partial^2u}{\partial x^2}
+$$
+
+<p>左一项：非线性对流（快追慢，制造陡坡）；右一项：扩散（把陡坡抚平）。两个相反的作用打架，形成所谓"saw-tooth"（锯齿）演化。这个方程虽小，却是好东西：它有解析解，方便你做精确对照——这在 CFD 里极其珍贵（真实流动几乎都没有解析解）。</p>
+
+<div class="box">
+<span class="box-title">◆ 为什么 Burgers 是"主线"</span>
+你的课程主线中"Burgers 主线"指的就是这一课。它包含了一个完整 PDE 求解器的全部要素：非线性项、二阶导数、复杂初始/边界条件、解析解对照。跑通它 = 有资格进军 2D 和 NS。今天这一课的成果将是后续 PINN 课程（B 轨）的对比基准——同一个方程，之后用神经网络解，你就能看懂"FDM 基线"多值钱。
+</div>
+
+<h2>2 · 初始/边界条件：比帽子有趣得多</h2>
+
+<p>官方这次换掉帽子，改用能显示冲击波的初始条件。初始（t=0）：</p>
+
+$$
+\phi(x,0) = \exp\left(\frac{-x^2}{4\nu}\right) + \exp\left(\frac{-(x-2\pi)^2}{4\nu}\right), \qquad
+u(x,0) = -\frac{2\nu}{\phi}\frac{\partial\phi}{\partial x} + 4
+$$
+
+<p>解析解（任意 t）：</p>
+
+$$
+\phi(x,t) = \exp\left(\frac{-(x-4t)^2}{4\nu(t+1)}\right) + \exp\left(\frac{-(x-4t-2\pi)^2}{4\nu(t+1)}\right), \qquad
+u(x,t) = -\frac{2\nu}{\phi}\frac{\partial\phi}{\partial x} + 4
+$$
+
+<p>边界：<strong>周期边界</strong> $u(0)=u(2\pi)$——右端溢出的量绕回左端。这会引出全课最狡猾的坑（§4 揭晓）。</p>
+
+<h3>为什么要用 Sympy？</h3>
+<p>$\partial_x\phi$ 手算容易漏符号、漏系数（官方原话："it would be easy to drop a sign or forget a factor of x"）。Sympy 替你求导、渲染成 $\LaTeX$，再 <code>lambdify</code> 成数值函数——这是把"符号推导"和"数值计算"接起来的标准桥梁，将来推导复杂通量时极有用。</p>
+
+<h2>3 · 逐行注释：官方原版</h2>
+
+<h3>3.1 Sympy 求导</h3>
+
+<pre><code>import numpy
+import sympy
+from sympy import init_printing
+init_printing(use_latex=True)     # 让 Sympy 输出用 LaTeX 渲染
+
+x, nu, t = sympy.symbols('x nu t')   # 声明三个符号变量
+
+phi = (sympy.exp(-(x - 4*t)**2 / (4*nu*(t+1))) +
+       sympy.exp(-(x - 4*t - 2*sympy.pi)**2 / (4*nu*(t+1))))
+phi</code></pre>
+
+<p><code>sympy.symbols('x nu t')</code> 一次声明三个符号。`**` 在 Sympy 里也代表幂。整个 <code>phi</code> 是一个 Sympy 表达式对象，屏幕会渲染成漂亮的数学式。</p>
+
+<pre><code>phiprime = phi.diff(x)     # 对 x 求偏导，一行搞定
+phiprime                    # 显示结果</code></pre>
+
+<pre><code>from sympy.utilities.lambdify import lambdify
+
+u = -2 * nu * (phiprime / phi) + 4   # 纯符号表达式构造 u
+ufunc = lambdify((t, x, nu), u)      # ← 关键：转成可调用数值函数
+print(ufunc(1, 4, 3))                # 代入 t=1,x=4,nu=3 测试</code></pre>
+
+<table>
+  <tr><th>行</th><th>干什么</th><th>为什么</th></tr>
+  <tr><td><code>phi.diff(x)</code></td><td>符号求 ∂φ/∂x</td><td>Sympy 自动链式求导，无手算错误</td></tr>
+  <tr><td><code>u = -2*nu*(phiprime/phi) + 4</code></td><td>把初始条件拼成符号表达式</td><td>复用了 phiprime 和 phi——符号运算让"拼式子"也零错误</td></tr>
+  <tr><td><code>lambdify((t, x, nu), u)</code></td><td>符号 → 数值函数</td><td>参数顺序明确：(t,x,nu)，之后调用 <code>ufunc(t_val, x_val, nu_val)</code></td></tr>
+</table>
+
+<h3>3.2 网格与初始场</h3>
+
+<pre><code>from matplotlib import pyplot
+%matplotlib inline
+
+nx = 101
+nt = 100
+dx = 2 * numpy.pi / (nx - 1)   # 注意域长 2π
+nu = .07
+dt = dx * nu                   # 由 dx 推断 dt（与稳定判据兼容的经验性取法）
+
+x = numpy.linspace(0, 2*numpy.pi, nx)
+un = numpy.empty(nx)           # 注意用 empty 而非 ones：马上会用 u 覆盖
+t = 0
+
+u = numpy.asarray([ufunc(t, x0, nu) for x0 in x])  # 用符号函数生成初始场
+u</code></pre>
+
+<p><code>numpy.asarray([ufunc(t, x0, nu) for x0 in x])</code>：列表推导逐个 x0 调数值函数，生成数组。这是"把符号解变成网格点数值"的惯用写法。</p>
+
+<h3>3.3 主循环：挑战在周期边界</h3>
+
+<pre><code>for n in range(nt):
+    un = u.copy()
+    for i in range(1, nx-1):      # 内层跳过两端（和 Step 3 一样，因要读 un[i+1]）
+        u[i] = un[i] - un[i] * dt / dx * (un[i] - un[i-1]) + \
+               nu * dt / dx**2 * (un[i+1] - 2*un[i] + un[i-1])
+        #       ↑对流项（Step 2）        ↑扩散项（Step 3）
+
+    # ← 关键：内层循环没覆盖 i=0 和 i=nx-1，周期边界在这补
+    u[0] = un[0] - un[0] * dt / dx * (un[0] - un[-2]) + \
+           nu * dt / dx**2 * (un[1] - 2*un[0] + un[-2])
+    #      ↑ i=0 的对流"左邻居"是 un[-2]（因为 u[-1]=u[0]，真正的"左边"是倒数第二点）
+    u[-1] = u[0]                # 周期:右端点=左端点</code></pre>
+
+<div class="box">
+<span class="box-title">◆ 周期边界的"头痛"点</span>
+第一，<code>un[-2]</code>：在周期世界，i=0 的左邻居不是数组尾的假值，而是 <code>un[-2]</code>（倒数第二点），因为 <code>un[-1]</code> 被约定等于 <code>un[0]</code>。<br>
+第二，右端 <code>u[-1] = u[0]</code>：设置周期，让最后一点跟第一点同步。<br>
+第三：<strong>内层 <code>range(1, nx-1)</code> 的范围很关键</strong>——若你写成 <code>range(1, nx)</code>，到 i=nx-1 时读 <code>un[i+1]=un[nx]</code> 会越界，这就是官方说"will cause you a bit of headache"的地方。
+</div>
+
+<h3>3.4 解析解对照（代码可复现的独特之处）</h3>
+
+<pre><code>u_analytical = numpy.asarray([ufunc(nt * dt, xi, nu) for xi in x])  # 解析解：t=nt*dt
+
+pyplot.figure(figsize=(11, 7), dpi=100)
+pyplot.plot(x, u, marker='o', lw=2, label='Computational')
+pyplot.plot(x, u_analytical, label='Analytical')
+pyplot.xlim([0, 2*numpy.pi])
+pyplot.ylim([0, 10])
+pyplot.legend()</code></pre>
+
+<p>两条线几近重合——你手写的求解器逼近了解析解。这种"数值 vs 解析"并排，是验证算法正确性的金标准。</p>
+
+<h2>4 · 必做实验</h2>
+
+<p><strong>实验 1</strong>：跑通全流程，看见"数值 vs 解析"两线几近重合。这是你 Burgers 主线的第一个交付物。</p>
+
+<p><strong>实验 2</strong>：把 <code>nt=100</code> 增大到 <code>500</code>。预测：冲击波更陡？还是被扩散压平？（指引：非线性继续堆尖，扩散继续抹平；看到演化在 <code>nt</code> 增大下更趋近解析解即可）</p>
+
+<p><strong>实验 3（必做，挑战自己）</strong>：故意把内层循环写成 <code>range(0, nx)</code>，看 index error 还是悄悄错——先用"预测"再跑，理解"周期边界的代码为什么必须这样补"。</p>
+
+<h2>5 · 检查点：闭卷自测</h2>
+
+<details class="quiz"><summary>Q1 · 写出 Burgers 方程的更新公式（含对流项与扩散项）。</summary>
+<div class="a">$u_i^{n+1}=u_i^n-u_i^n\frac{\Delta t}{\Delta x}(u_i^n-u_{i-1}^n)+\nu\frac{\Delta t}{\Delta x^2}(u_{i+1}^n-2u_i^n+u_{i-1}^n)$。对照代码：第二项是对流（0002），第三项是扩散（0005）。</div></details>
+
+<details class="quiz"><summary>Q2 · 周期边界条件下，i=0 的对流"左邻居"为什么是 un[-2] 而不是 un[-1]？</summary>
+<div class="a">约定 u[-1]=u[0]（周期），所以点 0 的"左边真正邻居"是倒数第二点 u[-2]；若用 un[-1] 会把它当成左邻居，引入错误。这也是官方提醒"周期边界头痛"的所在。</div></details>
+
+<details class="quiz"><summary>Q3 · lambdify 的作用是什么？为什么要用它？</summary>
+<div class="a">把 Sympy 的符号表达式转成可调用的数值函数，以便批量代入 numpy 网格值（栅格化）。没有它，符号表达式不能直接对数组求值。</div></details>
+
+<details class="quiz"><summary>Q4 · Burgers 方程为什么会自生"锯齿"（steepening）现象？</summary>
+<div class="a">非线性对流项（快追慢）持续堆陡前缘，而扩散项试图抹平；当扩散不够大时，波形会不断变陡并可能形成近间断的"冲击波"。解析解精确预测了这个演化，所以数值解能与它对照。</div></details>
+
+<details class="quiz"><summary>Q5（费曼）· 为什么把内层循环写成 range(0, nx) 会出错？</summary>
+<div class="a">因为更新公式要读 <code>un[i+1]</code>：i=nx-1 时下标越界。同时周期边界需要专门的 i=0/i-1 补写；把 range 写成 0..nx 既越界又没体现周期。边界是周期的事情，代码结构上要跟"内部点"分开处理。</div></details>
+
+<h2>6 · 默写任务（第 2 遍，必做）</h2>
+
+<div class="box">
+<span class="box-title">◆ 抄写三级跳 · 第 2 遍</span>
+合上讲义，新建空白 notebook 默写全部：Sympy 求导 + lambdify + 主循环 + 周期边界。跑通「计算 vs 解析」重合图。<strong>卡壳处=薄弱点，标记回来。</strong><br>
+<strong>第 3 遍（可选加分）</strong>：把求解器封装成 <code>def burgers(nx, nt, nu, sigma): ...</code> 并复用——迈向课程主线中的『solver.py』的第一步。
+</div>
+
+<div class="box">
+<span class="box-title">◆ 一手来源</span>
+Barba &amp; Forsyth, <em>CFD Python</em>, Step 4：本地 <code>code\cfdpython-repo\lessons\05_Step_4.ipynb</code><br>
+官方配套视频：<strong>Video Lesson 4</strong>（Step 1–4）：<a href="https://youtu.be/y2WaK7_iMRI">youtube</a><br>
+知识卡：es-derivatives（手头备忘）、周期边界（本课 §3.3）
+</div>
+
+<footer class="lesson-foot">
+  <div class="nav">
+    <span><a href="0005-step3-diffusion.html">← 0005 Step 3 扩散</a></span>
+    <span><a href="../reference/glossary.html">术语表</a></span>
+    <span>下一课：0007 · Step 5-6 二维对流 + 向量化</span>
+  </div>
+  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0006 课 · 2026-09-11</p>
+</footer>
+
+</div>
+</body>
+</html>

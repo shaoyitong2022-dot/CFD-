@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>0002 · Step 1 一维线性对流</title>
+<link rel="stylesheet" href="../assets/course.css">
+<script>
+MathJax = { tex: { inlineMath: [['$', '$']] } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+<div class="page">
+
+<header class="lesson-head">
+  <p class="kicker">Lesson 0002 · Phase A 第 1 课</p>
+  <h1>Step 1 · 一维线性对流：你的第一个差分求解器</h1>
+  <p class="meta">预计 40–50 分钟 ｜ 教材：<code>code\cfdpython-repo\lessons\01_Step_1.ipynb</code> ｜ <a href="../reference/glossary.html">术语表</a></p>
+</header>
+
+<div class="win">
+  <span class="box-title">✦ 今日战果（两个）</span>
+  ① 亲手把人生第一个 PDE 离散成可在电脑上计算的公式，并用两层循环写成一个能跑的数值求解器；<br>
+  ② 亲眼看到初始的"方帽"在传播中变形——并知道这是<strong>数值耗散</strong>在作祟（这是后面所有课的引子）。
+</div>
+
+<h2>1 · 我们先说清楚：这条方程在讲什么</h2>
+
+<p>这条方程只有两个速度，却承载了 CFD 一半的核心直觉：</p>
+
+$$
+\frac{\partial u}{\partial t} + c\frac{\partial u}{\partial x} = 0
+$$
+
+<p>每个部分的意思：</p>
+<ul>
+  <li>$\frac{\partial u}{\partial t}$：u 这一"场"（比如水的速度、污染物的浓度）<strong>随时间</strong>怎么变；</li>
+  <li>$c\frac{\partial u}{\partial x}$：场随位置的变化沿速度为 $c$ 的方向<strong>被搬运</strong>——这叫<strong>对流（convection）</strong>；</li>
+  <li>整条式子的含义：某一点的场之所以变化，唯一原因是"上游的东西被搬运过来了"，于是 $u$ 的形状<strong>保持原样但整体向右平移</strong>，速度就是 $c$。</li>
+</ul>
+
+<div class="box">
+<span class="box-title">◆ 为什么叫"线性"</span>
+方程里 $u$ 只出现一次且都在分子的线性位置，没有 $u^2$、没有 $\sin u$。线性方程有个上帝保佑的性质：<strong>形状不变、只是平移</strong>。Step 2 把 $c$ 换成 $u$ 自己（$\partial_t u + u\partial_x u=0$），就立刻变成非线性——那时候形状就会自我撕裂。先记住：<strong>线性 = 搬运不变形</strong>。
+</div>
+
+<p>如果 $u_0(x)$ 是 $t=0$ 初始的形状，那么方程精确解是：</p>
+
+$$u(x, t) = u_0(x - ct)$$
+
+<p>一个公式概括全部：$t$ 时刻在 $x$ 处看到的东西 = 初始时刻在 $x-ct$ 处的东西，因为那团东西沿 $x$ 方向已平移了 $ct$。记住这个"解析解"，后面验证代码全靠它。</p>
+
+<h2>2 · 把方程变成计算机能算的东西（慢动作离散）</h2>
+
+<p>连续世界计算机看不懂，必须切成网格。网格是什么？把 $x$ 轴切成 $n_x-1$ 段，得到 $n_x$ 个点，编号 $i=0,1,\dots,n_x-1$。相邻两点距离 $\Delta x$，相邻两个离散时刻距离 $\Delta t$。</p>
+
+<p>用导数的定义、直接扔掉取极限那一步：</p>
+
+$$\frac{\partial u}{\partial t} \approx \frac{u_i^{n+1} - u_i^{n}}{\Delta t}, \qquad
+  \frac{\partial u}{\partial x} \approx \frac{u_i^{n} - u_{i-1}^{n}}{\Delta x}$$
+
+<p>三处值得停下来说：</p>
+<ul>
+  <li><strong>时间导数是"前向"差分</strong>：用 $n$ 和 $n+1$ 两层，因为我们想从当前时刻推出未来——这正是求解器的目的；</li>
+  <li><strong>空间导数是"后向"差分</strong>：用 $i$ 和 $i-1$ 两个点，即"向左边取点"。原因马上见图——因为波向右走，上游（左边）才是信息的来源，这叫<strong>迎风（upwind）</strong>；</li>
+  <li>上标是时间层（$n$），下标是空间格点（$i$）。后面代码里记忆法：<strong>上标靠循环外圈 $n$，下标靠内圈 $i$</strong>。</li>
+</ul>
+
+<p>把两式代入原方程并解出唯一未知量 $u_i^{n+1}$，得到<strong>更新公式</strong>——这就是你在代码里将要写的那一行：</p>
+
+$$
+u_i^{n+1} = u_i^{n} - c\frac{\Delta t}{\Delta x}(u_i^{n} - u_{i-1}^{n})
+$$
+
+<p>解读：新值 $u_i^{n+1}$ = 旧值 $u_i^{n}$ −（搬运量）。搬运量正比于 $c$、正比于时间步 $\Delta t$、反比于网格 $\Delta x$，还正比于"我自己 − 左边邻居"的差值。数学推导这一步，对应你预习的"标准 b"：合上书，能独立从原方程推出这一行。</p>
+
+<div class="box">
+<span class="box-title">◆ 为什么空间差分要"向后取"，不一碗水端平？</span>
+物理直觉：$u$ 以速度 $c$ 向右搬运，所以 $x_i$ 处的信息来自它的<strong>上游</strong>（左边 $x_{i-1}$），而不是下游（右边 $x_{i+1}$）。方向取错了，格式会不稳定、数值解"爆炸"（这会亲自炸给你看，就在本课 §4 实验 3）。后面的 CFL 专章会从数学上严格证明这件事。
+</div>
+
+<h2>3 · 逐行注释：把更新公式翻译成 Python</h2>
+
+<p>先记两个小事：官方课程把 NumPy 写成 <code>import numpy</code>（写代码时都得写全 <code>numpy</code>），业界更流行 <code>import numpy as np</code>。为了和你复现官方代码一一对应，本课用官方的写法，后面向量化课再统一换成 <code>np</code>。<br>
+每次条件独立：<strong>手打，不要复制</strong>。打一行想一行——这是你代码弱最直接的补法。</p>
+
+<h3>3.1 参数区：定义网格和时间步</h3>
+
+<pre><code>nx = 41            # 空间格点数：x 方向切 40 段
+dx = 2 / (nx - 1)  # 每段长度 = 总长 2 除以段数 40 = 0.05
+nt = 25            # 时间步数：整个模拟推进 25 步
+dt = .025          # 每步的时间跨度 Δt
+c = 1              # 波的传播速度</code></pre>
+
+<table>
+  <tr><th>代码</th><th>它到底在干什么</th><th>对应公式</th></tr>
+  <tr><td><code>dx = 2 / (nx-1)</code></td><td>全是 41 个点，但首尾之间有 40 个间隔，所以是除以 <code>nx-1</code> 而不是 <code>nx</code>。</td><td>$\Delta x$</td></tr>
+  <tr><td><code>nt = 25</code></td><td>外层循环将执行 25 次，每次把整根"线"推进 0.025 秒，总共推进 25×0.025=0.625 秒。</td><td>循环次数</td></tr>
+  <tr><td><code>dt = 0.025</code></td><td>一个时间步走 0.025 秒。$c=1$ 意味着每一步波移动 0.025 米。</td><td>$\Delta t$</td></tr>
+  <tr><td><code>c = 1</code></td><td>波速归一化，方便检验：25 步后应该向右移动 0.625。</td><td>$c$</td></tr>
+</table>
+
+<h3>3.2 初始条件：造一个大礼帽</h3>
+
+<pre><code>u = numpy.ones(nx)                    # 一维数组，全部置 1（长度 nx）
+u[int(.5 / dx):int(1 / dx + 1)] = 2   # 把下标 int(0.5/dx) 到 int(1/dx) 之间的格子改成 2
+print(u)</code></pre>
+
+<p>这是全课最容易懵的一行，拆开解剖：</p>
+<ul>
+  <li><code>numpy.ones(nx)</code>：生成长度 41 的数组，元素全为 1。数组下标 0~40 对应 $x=0$~$2$。</li>
+  <li><code>0.5 / dx</code> = 0.5/0.05 = 10.0，<code>int(10.0)</code>=10：$x=0.5$ 落在下标 10。</li>
+  <li><code>1 / dx + 1</code> = 1/0.05+1=21，<code>int(21)</code>=21。<strong>注意这里手动 +1</strong>：因为 Python 切片 <code>a[10:21]</code> 取下标 10~20（右端点 21 不含），要覆盖到 $x=1$ 对应的下标 20，右端必须写 21。</li>
+  <li>于是下标 10~20 共 11 个格子 = 物理区间 $[0.5, 1]$，被赋值成 2；其余保持 1。帽子就这么诞生：左一半是 1，中间是 2，右一半是 1。</li>
+</ul>
+
+<div class="box">
+<span class="box-title">◆ int() 在这里的阴险之处</span>
+如果 $0.5/dx$ 不是整数（比如你把 <code>nx</code> 改成别的值），<code>int()</code> 会<strong>直接截断小数</strong>，帽子就悄悄偏离 0.5——这就是官方让你改 41 时"发生了什么"的一半原因。改 <code>nx</code> 时留意帽子边缘是否仍对齐 0.5。
+</div>
+
+<h3>3.3 观察帽子</h3>
+
+<pre><code>pyplot.plot(numpy.linspace(0, 2, nx), u);</code></pre>
+
+<p>官方在这里故意留了个问题：<em>为什么帽子两侧不是笔直的竖线？</em>答案：初始条件在格点上本来就是"一排 1、一排 2、一排 1"，每一排之间是垂直跳变的；<code>plot</code> 只是用直线把相邻数据点连起来，41 个点之间的线段把台阶画成了斜坡。帽子在数据层面是笔直的，是画图让肉眼看斜了。</p>
+
+<p>跑出图后停一下，把帽子的位置和 §2 里"帽子在 $[0.5,1]$"对一眼，确认下标↔坐标的对应。这个"坐标手感"后面 12 步都要用。</p>
+
+<h3>3.4 主循环：把更新公式搬到 for 循环里</h3>
+
+<p>这是求解器的灵魂，逐行注释：</p>
+
+<pre><code>un = numpy.ones(nx)          # 临时数组 un：准备装"下一步的 u"
+                             # （先随意填 1，循环里会立刻被真值覆盖）
+
+for n in range(nt):          # 外层循环：n = 0,1,...,24，共 25 个时间步
+    un = u.copy()            # 关键！把当前 u 整体复制给 un
+                             # 为什么必须 copy()？见下：'un = u' 只复制"名字"，不复制数据
+    for i in range(1, nx):   # 内层循环：i = 1,...,40
+
+        u[i] = un[i] - c * dt / dx * (un[i] - un[i-1])
+        #      ↑更新公式，逐词对照：
+        #     u_i^{n+1}    = u_i^n   -  c  * dt/dx *     (u_i^n  -  u_{i-1}^n)
+        #     新值          旧值           搬运量          我 - 左边邻居</code></pre>
+
+<p>三个"为什么"必须当场答出来（这是本课检查点的主问题）：</p>
+
+<table>
+  <tr><th>问题</th><th>答案</th></tr>
+  <tr><td>为什么是 <code>un = u.copy()</code>，而不是 <code>un = u</code>？</td><td><code>un = u</code> 让两个名字指向<strong>同一块内存</strong>；循环内一旦改了 <code>u[i]</code>，<code>un</code> 也变，公式里本该用"上一步"取值就乱了。必须 <code>copy()</code> 出一份独立副本，<code>un</code> 永远代表"上一步 $u^n$"。</td></tr>
+  <tr><td>为什么内层从 <code>range(1, nx)</code> 开始，跳过 <code>i=0</code>？</td><td>更新公式要用 <code>un[i-1]</code>；若 <code>i=0</code>，<code>un[-1]</code> 是数组"最后一个元素"（Python 负下标特性），把它当左邻居是个 Bug。跳过它，等于把空间边界固定在第 0 格。</td></tr>
+  <tr><td>为什么内层循环的更新用 <code>un</code> 里读值、写进 <code>u</code>？</td><td>同一时间步内，格点之间的更新必须彼此独立：都用同一步的旧值（<code>un</code>）计算，写到新数组（<code>u</code>）。如果边算边用新值，就是"以更新过的值再算"，物理上变成不同步——这是时间推进正确性的关键。</td></tr>
+</table>
+
+<div class="box">
+<span class="box-title">◆ 一个烧脑的伏笔</span>
+上面最后一条"必须用 un 里的旧值"——如果不用 copy、边算边覆盖，就是典型的错误写法，这个坑你会在后面自己踩到。官方用 $u^n$ / $u^{n+1}$ 两层来避免。写循环时的一律原则：<strong>读旧数组、写新数组</strong>。
+</div>
+
+<h3>3.5 再看一眼：帽子跑起来的样子</h3>
+
+<pre><code>pyplot.plot(numpy.linspace(0, 2, nx), u);</code></pre>
+
+<p>帽子明显向右移动了（这正是 $c=1$ 的对流），但它<strong>不再是帽子</strong>：两侧变圆、顶部变低、后面拖了小尾巴。官方问：<em>发生了什么？</em>——这是本课最核心的问题，答案在 §4 实验 3 里揭晓。</p>
+
+<h2>4 · 三个必做实验（改参数，观察，解释）</h2>
+
+<p>每次改参数前，<strong>先合上笔记本，口头预测会发生什么</strong>，再运行验证——这是你的第 3 遍"变参数预测"。</p>
+
+<h3>实验 1：加密网格 <code>nx=41 → 81</code></h3>
+<p>网格变密后帽子更细分。重点观察两点：<strong>帽子的水平位置有没有动</strong>（应该还在 $[0.5,1]$，因为切片用 <code>dx</code> 重新算了位置）和<strong>边缘的分辨率</strong>。同时留意：加密后物理的 $\Delta x$ 变小，但 $\Delta t$ 没变——这已经在悄悄改变一个叫 CFL 数的量，它决定了稳定性（0004 专章）。</p>
+
+<h3>实验 2：加大时间步 <code>dt=0.025 → 0.1</code></h3>
+<p>Δt 放大 4 倍。小心——若直接运行，你很可能看到数值解开始<strong>震荡、发散甚至爆炸</strong>。这不是 Bug，是格式不稳定：一个时间步里波移动的距离（$c\Delta t = 0.1$）超过了半个网格宽度（$\Delta x/2 = 0.025$），信息流速快过网格能传递的速度，数值解就"疯了"。这个临界判断就是 CFL 条件，0004 课正式登场。</p>
+
+<h3>实验 3：把内层改成 <code>range(0, nx)</code>（或删掉迎风格式）</h3>
+<p>如果内层从 <code>0</code> 开始（等于把 <code>un[-1]</code> 当左邻居），帽子边缘会怎样？如果再把空间差分改成"向前取点"（用 <code>un[i+1]-un[i]</code> 代替 <code>un[i]-un[i-1]</code>）——会让格式失去迎风性，右边邻居（下游）成了信息来源，与波的传播方向相反，通常立刻不稳定。试完把结果记下来，这是"为什么迎风"的最好实证。</p>
+
+<div class="box">
+<span class="box-title">◆ 实验 2、3 的账，留到 0004 付</span>
+如果你在实验里看到了震荡/爆炸，先用一句话记录它长什么样（"波形出现锯齿"还是"直接炸成 NaN"），然后把参数改回去继续。CFL 专章会给出严格判据 $C=\frac{c\Delta t}{\Delta x}\le 1$ 和理论解释。现在只要建立"这个开关是稳定性"的直觉。
+</div>
+
+<h2>5 · 检查点：闭卷自测（合上笔记本回答）</h2>
+
+<details class="quiz"><summary>Q1 · 写出线性对流方程的更新公式（这个必须闭卷默写）。</summary>
+<div class="a">$u_i^{n+1}=u_i^{n}-c\frac{\Delta t}{\Delta x}(u_i^{n}-u_{i-1}^{n})$。默写时检查三点：系数 $c\Delta t/\Delta x$、括号里是"自己减左边邻居"、下标是 $i$ 和 $i-1$（迎风）。</div></details>
+
+<details class="quiz"><summary>Q2 · 为什么空间差分要用后向（取 $i-1$ 而非 $i+1$）？换成 $i+1$ 会发生什么？</summary>
+<div class="a">波向右移动，$x_i$ 处的信息来自上游（左邻居 $x_{i-1}$），用下游（$i+1$）违背物理方向，格式通常不稳定、数值解震荡或发散。迎风方向的直觉就是"信息从哪儿来，就从哪儿取点"。</div></details>
+
+<details class="quiz"><summary>Q3 · <code>un = u.copy()</code> 和 <code>un = u</code> 有何本质区别？为什么必须用前者？</summary>
+<div class="a"><code>un = u</code> 只是让两个名字指向同一个数组（改一个、另一个跟着变）；<code>copy()</code> 复制一份独立数据。<strong>没 copy 的话，循环里更新了 <code>u[i]</code>，<code>un</code> 也变，公式里的"上一步值"就被污染了</strong>——时间推进彻底错乱。</div></details>
+
+<details class="quiz"><summary>Q4 · 为什么 <code>dx = 2/(nx-1)</code> 而不是 <code>2/nx</code>？</summary>
+<div class="a">41 个点之间只有 40 个间隔，$\Delta x$=总长/间隔数，所以除的是 $\text{nx}-1$。把 41 改成 81 时同理要算 80。</div></details>
+
+<details class="quiz"><summary>Q5（费曼题）· 向一个不会数值计算的同学解释：为什么初始是"方帽"，跑 25 步后变"圆顶"？</summary>
+<div class="a">参考表述：因为我们只在有限的格点上采样，格点之间用直线连起来，而一阶格式的"离散误差"会让尖锐的跳跃被抹平（人为黏性/数值耗散）——网格越粗、抹得越狠。它向右传送是对的（物理是 $c=1$ 每秒平移 0.625），但形状会受损；精细网格（实验 1）能减缓损伤。</div></details>
+
+<details class="quiz"><summary>Q6 · 预测实验：把 <code>dt</code> 从小调大（0.025→0.1），相同 <code>nx=41</code>，你预期图会怎样？</summary>
+<div class="a">预期：数值解开始振荡、出现锯齿，甚至最终发散成 NaN。因为 $c\Delta t$（0.1）超过了 $\Delta x$（0.05）能承受的信息传播范围，稳定性判据被打破——CFL 数 >1。若没预期到这一点，恰恰是这节课要补的认知盲区。</div></details>
+
+<h2>6 · 默写任务（第 2 遍，本课必做）</h2>
+
+<div class="box">
+<span class="box-title">◆ 抄写三级跳 · 第 2 遍</span>
+合上讲义与官方 notebook，<strong>打开新的空白 notebook，凭记忆把 3.1→3.5 全部代码从零敲一遍</strong>，跑通并让帽子和官方一致地往右挪。卡住的地方（记不起某行、忘了 <code>copy</code>）就是你没真懂的地方→把那一行标记为"错题"，回来对照讲义，写一句"我当时为什么错"。
+</div>
+
+<p>完成之后，做<a href="../reference/glossary.html">术语表</a>里的 <em>迎风 / 数值耗散 / 网格</em>三条的自查。回来告诉我：① 序号；② 实验 1–3 你各看到了什么（最好截图或描述差异）；③ 默写时卡在哪几行。</p>
+
+<div class="box">
+<span class="box-title">◆ 一手来源（本课对齐）</span>
+Barba &amp; Forsyth, <em>CFD Python</em>, Step 1：本地 <code>code\cfdpython-repo\lessons\01_Step_1.ipynb</code>。作者配套视频（YouTube）：<strong>Video 2/3</strong>（差分、截断误差、收敛阶）与 <strong>Video 4</strong>（Step 1 逐步拆解）。在线版：<a href="https://nbviewer.jupyter.org/github/barbagroup/CFDPython/blob/master/lessons/01_Step_1.ipynb">nbviewer</a>。
+</div>
+
+<div class="box">
+<span class="box-title">✉ 随时找助教</span>
+任何一步卡住、任何一题拿不准、图和预期长得不一样——直接把现象丢过来：报错全文、你改了什么参数、预期看到什么、实际看到什么。不猜谜。
+</div>
+
+<footer class="lesson-foot">
+  <div class="nav">
+    <span><a href="0001-env-numpy-first-look.html">← 0001 NumPy 热身</a></span>
+    <span><a href="../reference/glossary.html">术语表</a></span>
+    <span>下一课：0003 · Step 2 非线性对流（待生成）</span>
+  </div>
+  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0002 课 · 2026-09-11</p>
+</footer>
+
+</div>
+</body>
+</html>

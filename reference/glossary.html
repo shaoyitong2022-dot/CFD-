@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>术语表 · CFDPython 双轨课程</title>
+<link rel="stylesheet" href="../assets/course.css">
+<script>
+MathJax = { tex: { inlineMath: [['$', '$']] } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+<div class="page">
+<header class="lesson-head">
+  <p class="kicker">Reference · 参考文档 01</p>
+  <h1>术语表 GLOSSARY</h1>
+  <p class="meta">双轨课程统一用语。新术语随课程推进持续增补 · <a href="../lessons/0001-env-numpy-first-look.html">返回第 0001 课</a></p>
+</header>
+
+<h2>A 轨 · 数值方法（CFDPython）</h2>
+<dl class="gloss">
+
+  <dt>有限差分 <span class="en">finite difference, FD</span></dt>
+  <dd>用相邻网格点上函数值的差商近似导数：$\frac{\partial u}{\partial x}\approx\frac{u_{i+1}-u_i}{\Delta x}$（向前差分）。整个 CFDPython 课程的地基。</dd>
+
+  <dt>网格 <span class="en">grid / mesh</span></dt>
+  <dd>把连续时空切成离散点阵：空间步长 $\Delta x$、时间步长 $\Delta t$。计算机不认识连续世界，只认识网格。</dd>
+
+  <dt>初值条件 <span class="en">IC, initial condition</span> / 边界条件 <span class="en">BC, boundary condition</span></dt>
+  <dd>PDE 的"起跑线"与"围栏"。IC 给 $t=0$ 时刻的场；BC 给计算域边缘的约束（Dirichlet 定值 / Neumann 定梯度 / 周期）。</dd>
+
+  <dt>CFL 条件 <span class="en">Courant–Friedrichs–Lewy condition</span></dt>
+  <dd>显式格式的稳定性红线：信息在一个时间步内走过的物理距离不能超过一个网格宽，$C=\frac{u\Delta t}{\Delta x}\le 1$。超过它，数值解震荡发散。</dd>
+
+  <dt>Courant 数 <span class="en">Courant number</span></dt>
+  <dd>即上面的无量纲数 $C$，又称 CFL 数。C=1 是"刚好踩着信息传播速度"的极限状态。</dd>
+
+  <dt>数值耗散 <span class="en">numerical diffusion / dissipation</span></dt>
+  <dd>低阶格式把尖锐波抹平的倾向——数值解表现得更"黏"。Step 1 里方波跑着跑着变斜坡就是它。</dd>
+
+  <dt>数值色散 <span class="en">numerical dispersion</span></dt>
+  <dd>不同频率的波以不同数值速度传播，导致波前振荡、拖尾（非物理的"涟漪"）。</dd>
+
+  <dt>迎风格式 <span class="en">upwind scheme</span></dt>
+  <dd>导数差分方向顺着来流方向取（风从左边来就向左边取点），让格式稳定。CFDPython Step 1 的向前差分正是原始的迎风思想。</dd>
+
+  <dt>通量 <span class="en">flux</span></dt>
+  <dd>物理量穿过单位截面的输运率（质量/动量/能量）。守恒律 PDE 的标准写法 $\partial_t u + \nabla\cdot F = 0$ 中的一切都在 $F$ 里。</dd>
+
+  <dt>收敛阶 <span class="en">order of accuracy</span></dt>
+  <dd>网格减半时误差下降的幂次：一阶 $O(\Delta x)$ 误差减半，二阶 $O(\Delta x^2)$ 误差降为四分之一。中心差分二阶，向前差分一阶。</dd>
+
+  <dt>FTBS / FTCS</dt>
+  <dd>格式命名的四字密码：F=Forward（时间向前），T=Taylor/时间层，B=Backward（空间向后），C=Centered（空间居中）。FTBS=时间前向+空间后向=迎风；FTCS=时间前向+空间居中（扩散问题常用）。</dd>
+
+  <dt>双曲 / 抛物 / 椭圆 <span class="en">hyperbolic / parabolic / elliptic</span></dt>
+  <dd>PDE 三大类型。对流方程（双曲）传信息、扩散方程（抛物）抹平信息、Laplace 方程（椭圆）全局瞬时平衡。分别对应 Step 1–2、Step 3、Step 9–10。</dd>
+
+  <dt>压力泊松方程 <span class="en">pressure Poisson equation</span></dt>
+  <dd>不可压 NS 的核心 trick：速度散度为零的约束可改写成关于压力的椭圆方程，Step 11 腔流的主角。</dd>
+
+  <dt>向量化 <span class="en">vectorization</span></dt>
+  <dd>用 NumPy 整数组运算替代 Python for 循环，把循环下放到 C 层执行，典型加速 100 倍。CFDPython 前半程用循环讲概念，后半程全部向量化重写。</dd>
+
+</dl>
+
+<h2>B 轨 · 机器学习（谐振子 PINN）</h2>
+<dl class="gloss">
+
+  <dt>自动微分 <span class="en">automatic differentiation, autograd</span></dt>
+  <dd>程序化地对复合函数求精确导数，机器是"对计算图求导"而非数值差商。PyTorch 的 <code>torch.autograd.grad</code> 是其在课中的入口。</dd>
+
+  <dt>计算图 <span class="en">computational graph</span></dt>
+  <dd>神经网络前向传播记录下来的运算 DAG。反传 loss 时沿图回溯自动算出所有参数梯度。<code>create_graph=True</code> 的含义：把求导过程本身也记入图，这样导数还能再求导（二阶导）。</dd>
+
+  <dt>残差 <span class="en">residual</span></dt>
+  <dd>把试探解代入方程后剩下的"没被满足的部分"。谐振子中 $r = m\ddot{x}+\mu\dot{x}+kx$，精确解时 $r\equiv 0$。</dd>
+
+  <dt>物理损失 <span class="en">physics loss</span></dt>
+  <dd>残差平方和在采样点上的均值 $\frac{1}{N}\sum r_i^2$。PINN 的"物理"二字全部落在这里：网络被迫学一个让方程几乎成立的函数。</dd>
+
+  <dt>数据损失 <span class="en">data loss</span></dt>
+  <dd>网络输出与观测点的均方误差（普通监督学习那一项）。总损失 $=$ 数据项 $+$ 权重 $\times$ 物理项，权重平衡是 PINN 训练的头号玄学。</dd>
+
+  <dt>PINN <span class="en">physics-informed neural network</span></dt>
+  <dd>把已知微分方程作为软约束写进损失函数的神经网络（Raissi et al. 2019）。既能当 PDE 求解器（正向），也能反演方程参数（逆向）。</dd>
+
+  <dt>插值 vs 外推 <span class="en">interpolation vs extrapolation</span></dt>
+  <dd>裸 NN 只会插值——训练数据覆盖范围内有效；PINN 靠方程约束获得外推能力：数据没覆盖的区域物理定律仍然成立。</dd>
+
+</dl>
+
+<footer class="lesson-foot">
+  <div class="nav">
+    <span><a href="../lessons/0001-env-numpy-first-look.html">← 第 0001 课</a></span>
+    <span>CFDPython 双轨课程 · 术语表 v1（2026-09-09）</span>
+  </div>
+</footer>
+</div>
+</body>
+</html>

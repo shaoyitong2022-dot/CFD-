@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>0010 · Step 11+12 二维 NS 腔流与通道流</title>
+<link rel="stylesheet" href="../assets/course.css">
+<script>
+MathJax = { tex: { inlineMath: [['$', '$']] } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+<div class="page">
+
+<header class="lesson-head">
+  <p class="kicker">Lesson 0010 · Phase A 最终章 · 首次解 Navier-Stokes</p>
+  <h1>Step 11+12 · 二维 Navier-Stokes：腔流与通道流</h1>
+  <p class="meta">预计 75–90 分钟（A 轨大结局）｜ 教材：<code>code\cfdpython-repo\lessons\14_Step_11.ipynb</code> 与 <code>15_Step_12.ipynb</code> ｜ <a href="0009-step9-10-laplace-poisson.html">← 前置 0009</a></p>
+</header>
+
+<div class="win">
+  <span class="box-title">✦ 今日战果（A 轨收官）</span>
+  ① 用前 10 课的积木搭出第一个 <strong>不可压 Navier-Stokes 求解器</strong>——腔流（lid-driven cavity）：盖子拖动、内部生旋涡；<br>
+  ② 理解<strong>投影法（pressure-Poisson）</strong>：动量更新半步 + 压力泊松迭代半部，二者交替；<br>
+  ③ 在 Step 12 体验周期边界与恒定驱动源项 $F$，把 0006 的周期边界、0009 的迭代法全串起来。
+</div>
+
+<h2>1 · 我们在解什么：不可压 NS 的三条方程</h2>
+
+<p>速度两个分量（u,v）+ 压力 p。动量守恒 + 连续性（质量守恒）：</p>
+
+$$
+\frac{\partial u}{\partial t}+u\frac{\partial u}{\partial x}+v\frac{\partial u}{\partial y}
+=-\frac{1}{\rho}\frac{\partial p}{\partial x}+\nu\left(\frac{\partial^2u}{\partial x^2}+\frac{\partial^2u}{\partial y^2}\right)
+$$
+
+$$
+\frac{\partial v}{\partial t}+u\frac{\partial v}{\partial x}+v\frac{\partial v}{\partial y}
+=-\frac{1}{\rho}\frac{\partial p}{\partial y}+\nu\left(\frac{\partial^2v}{\partial x^2}+\frac{\partial^2v}{\partial y^2}\right)
+$$
+
+$$
+\frac{\partial^2p}{\partial x^2}+\frac{\partial^2p}{\partial y^2}
+=-\rho\left(\frac{\partial u}{\partial x}\frac{\partial u}{\partial x}+2\frac{\partial u}{\partial y}\frac{\partial v}{\partial x}+\frac{\partial v}{\partial y}\frac{\partial v}{\partial y}\right)
+$$
+
+<div class="box">
+<span class="box-title">◆ 最难的一步：压力没有自己的演化方程</span>
+不可压意味着 $\nabla\cdot\vec{v}=0$ 是<strong>运动学约束</strong>而不是演化方程。压力的作用就是"时刻调整速度场，让散度为零"。把对动量方程取散度，才得到压力泊松方程（第三步）——这正是 0009 预告的用途。物理直觉：流场要"无源无汇"，压力像一只隐形的手，在每个格点按需要的量推挤流体，保证既不堆积也不真空。
+</div>
+
+<p>教学建议（官方原话）：把上面三条方程<strong>手抄一遍</strong>，逐项对照 —— 每条项你都在 0003/0005/0007/0009 见过。</p>
+
+<h2>2 · 求解节奏（每一大时间步做两件事）</h2>
+
+<div class="box">
+<span class="box-title">◆ 投影法两步节奏</span>
+设当前速度 $\vec{v}^n$。每一步：<br>
+① <strong>动量半步</strong>：用 $\vec{v}^n$ 更新出"暂态速度"（不保证散度为零）——方程 1、2；<br>
+② <strong>压力投影</strong>：求解压力泊松（用 <code>build_up_b</code> 组装右端、<code>pressure_poisson</code> 迭代），再用压力梯度修正速度，保证下步散度≈0。<br>
+顺序在代码里就是 <code>build_up_b → pressure_poisson → 更新 u → 更新 v</code>。
+</div>
+
+<h2>3 · 逐行注释：官方三函数</h2>
+
+<h3>3.1 build_up_b：右侧那坨碎装腔</h3>
+
+<pre><code>def build_up_b(b, rho, dt, u, v, dx, dy):
+    # b 是压力泊松的"右端项"（公式第三行的括号内容×ρ）
+    b[1:-1, 1:-1] = (rho * (1 / dt *
+                    ((u[1:-1, 2:] - u[1:-1, 0:-2]) / (2 * dx) +
+                     (v[2:, 1:-1] - v[0:-2, 1:-1]) / (2 * dy)) -
+                    ((u[1:-1, 2:] - u[1:-1, 0:-2]) / (2 * dx))**2 -
+                    2 * ((u[2:, 1:-1] - u[0:-2, 1:-1]) / (2 * dy) *
+                         (v[1:-1, 2:] - v[1:-1, 0:-2]) / (2 * dx)) -
+                    ((v[2:, 1:-1] - v[0:-2, 1:-1]) / (2 * dy))**2))
+    #   ↑ ρ[ 1/Δt(∂u/∂x+∂v/∂y) - (∂u/∂x)² - 2(∂u/∂y)(∂v/∂x) - (∂v/∂y)² ]
+    #     全部用中心差分(2Δx/2Δy)
+    return b</code></pre>
+
+<p>四个括号从左到右逐个对应压力泊松 RHS 的四项：时间项（反映散度）、非线性平方项 ×3。它是"硬写容易错的一长串"，官方专门抽出函数防止拼写错误。</p>
+
+<h3>3.2 pressure_poisson：迭代求解 p（0009 的直接复用）</h3>
+
+<pre><code>def pressure_poisson(p, dx, dy, b):
+    pn = numpy.empty_like(p); pn = p.copy()
+    for q in range(nit):                 # nit=50：内部子迭代（伪时间）
+        pn = p.copy()
+        p[1:-1, 1:-1] = (((pn[1:-1, 2:] + pn[1:-1, 0:-2]) * dy**2 +
+                          (pn[2:, 1:-1] + pn[0:-2, 1:-1]) * dx**2) /
+                         (2 * (dx**2 + dy**2)) -
+                         dx**2 * dy**2 / (2 * (dx**2 + dy**2)) * b[1:-1,1:-1])
+        # Poisson 五点模板 + 源项 —— 与 0009 的 Step 10 完全相同的结构
+        p[:, -1] = p[:, -2]   # ∂p/∂x=0 @ x=2（Neumann，等于相邻列）
+        p[0, :]  = p[1, :]    # ∂p/∂y=0 @ y=0
+        p[:, 0]  = p[:, 1]    # ∂p/∂x=0 @ x=0
+        p[-1, :] = 0          # p=0 @ y=2（参考压力零点）
+    return p</code></pre>
+
+<div class="box">
+<span class="box-title">◆ 为什么叫"填充压力泊松"？</span>
+压力没有时间传播公式，要反复解泊松让它满足 $\nabla\cdot\vec{v}=0$。每步把 b（由当前速度算出）右端代入，迭代 50 次逼近一致。这个"0 阶精度 x 多次迭代"是腔流教学的标准折中。
+</div>
+
+<h3>3.3 cavity_flow：组装动量更新</h3>
+
+<pre><code>def cavity_flow(nt, u, v, dt, dx, dy, p, rho, nu):
+    un = numpy.empty_like(u); vn = numpy.empty_like(v)
+    b = numpy.zeros((ny, nx))
+    for n in range(nt):
+        un = u.copy(); vn = v.copy()          # 快照
+        b = build_up_b(b, rho, dt, u, v, dx, dy)   # ①压力RHS
+        p = pressure_poisson(p, dx, dy, b)         # ②解压力
+        # ③u 动量更新：五类项= 旧值 -x对流 -y对流 -压力梯度 + 黏性扩散
+        u[1:-1, 1:-1] = (un[1:-1, 1:-1] -
+                         un[1:-1, 1:-1] * dt / dx * (un[1:-1, 1:-1] - un[1:-1, 0:-2]) -
+                         vn[1:-1, 1:-1] * dt / dy * (un[1:-1, 1:-1] - un[0:-2, 1:-1]) -
+                         dt / (2 * rho * dx) * (p[1:-1, 2:] - p[1:-1, 0:-2]) +
+                         nu * (dt / dx**2 * (un[1:-1, 2:] - 2*un[1:-1, 1:-1] + un[1:-1, 0:-2]) +
+                               dt / dy**2 * (un[2:, 1:-1] - 2*un[1:-1, 1:-1] + un[0:-2, 1:-1])))
+        # ④v 动量更新：结构相同，换成 v 和 y 方向压力梯度
+        v[1:-1,1:-1] = (vn[1:-1, 1:-1] -
+                        un[1:-1, 1:-1] * dt / dx * (vn[1:-1, 1:-1] - vn[1:-1, 0:-2]) -
+                        vn[1:-1, 1:-1] * dt / dy * (vn[1:-1, 1:-1] - vn[0:-2, 1:-1]) -
+                        dt / (2 * rho * dy) * (p[2:, 1:-1] - p[0:-2, 1:-1]) +
+                        nu * (dt / dx**2 * (vn[1:-1, 2:] - 2*vn[1:-1, 1:-1] + vn[1:-1, 0:-2]) +
+                              dt / dy**2 * (vn[2:, 1:-1] - 2*vn[1:-1, 1:-1] + vn[0:-2, 1:-1])))
+        # ⑤边界：无滑移 u=v=0，盖子 u[-1,:]=1（唯一驱动）
+        u[0, :] = 0; u[:, 0] = 0; u[:, -1] = 0
+        u[-1, :] = 1                 # 盖子以 u=1 向右拖动
+        v[0, :] = 0; v[-1, :] = 0; v[:, 0] = 0; v[:, -1] = 0
+    return u, v, p</code></pre>
+
+<table>
+  <tr><th>项</th><th>代码片段</th><th>对应</th></tr>
+  <tr><td>旧值</td><td><code>un[1:-1,1:-1]</code></td><td>$u^n$</td></tr>
+  <tr><td>x 对流</td><td><code>un*dt/dx*(自-左邻)</code></td><td>0007 非线性对流·x</td></tr>
+  <tr><td>y 对流</td><td><code>vn*dt/dy*(自-上邻)</code></td><td>0007 非线性对流·y</td></tr>
+  <tr><td>压力梯度</td><td><code>dt/(2ρdx)*(右-左)</code></td><td>新增：中心差分的 $-\frac{1}{\rho}\partial_x p$</td></tr>
+  <tr><td>黏性扩散</td><td><code>νΔt/Δx²*(模板) + νΔt/Δy²*(模板)</code></td><td>0008 二维扩散</td></tr>
+</table>
+
+<div class="box">
+<span class="box-title">◆ 唯一的"新东西"是压力梯度项与盖子</span>
+其余全部是复用。动量里唯一没见过的是压力梯度（中心差分、除以 2Δx/2Δy），边界唯一没见过的是"盖子"：<code>u[-1,:]=1</code> 让上边界以恒速拖动，撕扯下方流体、生成回转涡旋。这就是 lid-driven cavity 的全部"机关"。
+</div>
+
+<h2>4 · Step 12：通道流——周期边界 + 源项 F</h2>
+
+<p>改动极少：① u 动量方程右侧加恒定源项 $F$（模拟压降驱动）；② 边界改为 x 方向<strong>周期</strong>，上下壁面无滑移。</p>
+
+$$\text{u 方程} + F,\qquad \text{边界：}u(0)=u(2),\ v(0)=v(2),\ u,v=0\ @\ y=0,2,\ \partial p/\partial y=0\ @\ y=0,2$$
+
+<div class="box">
+<span class="box-title">◆ F 的物理：为什么不能直接周期压力</span>
+官方 §Learn more 点破：真实管道流靠恒定压力梯度 $F=-\partial P/\partial x$ 驱动。但周期边界要求"左=右"，而压降恰恰要求左右压力<strong>不相等</strong>——所以把压力拆成 $p=P+p'$，恒定驱动写进动量方程的源项 $F$，把周期留给扰动 $p'$。这是个非常实用的建模技巧，值得在笔记里记一行。
+</div>
+
+<p>Step 12 的代码几乎就是把 Step 11 的 <code>build_up_b/pressure_poisson</code> 改成周期版（含 x=0、x=2 边界的手写），<code>u</code> 更新末尾加 <code>+ F*dt</code>。周期边界的处理方式和 0006 完全同思想——<strong>不是"设固定值"，而是"在每一轮更新里把左右边界当作邻居一样显式算"</strong>。</p>
+
+<h2>5 · 必做实验</h2>
+
+<p><strong>实验 1</strong>：跑 cavity <code>nt=100</code> 和 <code>nt=700</code>，观察旋涡由萌发到稳定的演变；用 contourf + quiver、以及 streamplot 两种方式看流线。</p>
+
+<p><strong>实验 2</strong>：把盖子速度改成 <code>u[-1,:]=0.5</code>，对比旋涡强度变化（速度减半旋涡是否变弱）。</p>
+
+<p><strong>实验 3（挑战，衔接 Phase B）</strong>：把 Step 11 的 <code>nt</code> 尽可能跑大，观察稳态腔流。这一个"稳态流场"是后续 PINN 想逼近/反演的目标场——你的 FDM 基准此刻有了"标准答案"意义。</p>
+
+<h2>6 · 检查点：闭卷自测</h2>
+
+<details class="quiz"><summary>Q1 · 投影法通过哪两个步骤保证速度场不可压？</summary>
+<div class="a">①构建右端 b、求解压力泊松（让压力满足约束）；②用压力梯度修正动量更新后的速度，使其散度≈0。每步都做，环环相扣。</div></details>
+
+<details class="quiz"><summary>Q2 · build_up_b 里最左的括号 (1/Δt)(∂u/∂x+∂v/∂y) 物理代表什么？</summary>
+<div class="a">反映流场瞬时的"膨胀率/散度"：因为压力要"纠正散度"，这项把当前速度场的散度用 1/Δt 尺度换算成压力源。它是把连续性约束渗进压力方程的关键项。</div></details>
+
+<details class="quiz"><summary>Q3 · 什么是"盖子"？它对流场做了什么？</summary>
+<div class="a">上边界 <code>u[-1,:]=1</code> 恒速向右。黏性拖拽下方流体向右，箱子其他边界无滑移，四壁围出空间迫使流体回转，形成涡旋——lid-driven cavity 的招牌结构。</div></details>
+
+<details class="quiz"><summary>Q4 · Step 12 为什么给 u 方程加 F 而不直接周期化压力？</summary>
+<div class="a">周期边界要求左右压力相等，与恒定压降矛盾。施加恒定压强梯度作为源项 F，压力分解 p=P+p'，周期放在 p' 上。既满足周期约束又模拟了真实驱动。</div></details>
+
+<details class="quiz"><summary>Q5（费曼）· 你怎么跟别人解释"不可压流场里压力是怎么被算出来的"？</summary>
+<div class="a">参考表述：不可压就是"流不堆积"。速度在每一步算完后可能有一点散度（堆积），压力泊松方程会告诉你"该在每个地方施加多大的推挤"来把这点堆积抹掉；我们不知道压力本身，但通过解方程（用当前速度的散度作源）求出来它该是多少，这就是投影。</div></details>
+
+<h2>7 · 默写任务（第 2 遍，必做）+ A 轨收尾</h2>
+
+<p>合上讲义，从零默写 Step 11 的三个函数（build_up_b / pressure_poisson / cavity_flow）——这一步比较长，允许你分 2~3 次完成，但<strong>每次必须跑出结果</strong>。跑通后，做 Step 12（改动量小，主要加 F 和周期）。</p>
+
+<div class="box">
+<span class="box-title">🎉 A 轨完成checklist</span>
+□ 0002-0006 一维（对流/CFL/扩散/Burgers）<br>
+□ 0007-0010 二维（对流转扩散/二维Burgers/Laplace/Poisson/NS腔流与通道流）<br>
+□ 你现在手里有：一个能跑"手写FDM 解 NS"的 py 代码库——这是课程主线中"solver.py"的真实交付物。建议给它建 GitHub 仓库并写 README。
+</div>
+
+<div class="box">
+<span class="box-title">◆ 一手来源</span>
+Barba &amp; Forsyth, <em>CFD Python</em>, Step 11（14）/ Step 12（15）。配套视频：<strong>Video Lesson 9</strong>（CFL 严谨分析，回顾稳定）：<a href="https://youtu.be/Yw1YPBupZxU">youtube</a>；官方课程 Piazza 资源：<a href="https://piazza.com/bu/spring2013/me702/resources">Spring 2013 ME702</a>。<br>
+下一课起进入 <strong>Phase B · 谐振子 PINN</strong>（PyTorch 轨道）。
+</div>
+
+<footer class="lesson-foot">
+  <div class="nav">
+    <span><a href="0009-step9-10-laplace-poisson.html">← 0009 Step 9+10</a></span>
+    <span><a href="../reference/glossary.html">术语表</a></span>
+    <span>下一课：0011 · Phase B B1 谐振子 PINN 概念课</span>
+  </div>
+  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0010 课 · 2026-09-11</p>
+</footer>
+
+</div>
+</body>
+</html>
