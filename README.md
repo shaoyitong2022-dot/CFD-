@@ -45,8 +45,8 @@
 
 ```bash
 # 1. 克隆本仓库
-git clone https://github.com/<your-name>/cfdpython-zh.git
-cd cfdpython-zh
+git clone https://github.com/shaoyitong2022-dot/CFD-.git
+cd CFD-
 
 # 2. 用 conda 建环境（或直接用 Anaconda 预装环境）
 conda create -n cfd python=3.10
@@ -54,7 +54,7 @@ conda activate cfd
 conda install -c conda-forge numpy matplotlib sympy scipy jupyter
 
 # 3. 打开教程导航页（或用浏览器直接打开 index.html）
-docs/index.html          # 课程导航（15 课索引）
+index.html              # 课程导航（15 课索引）
 # 或逐课打开 lessons/0002-*.html ... 开始学习
 ```
 
@@ -72,7 +72,6 @@ docs/index.html          # 课程导航（15 课索引）
 
 ```
 ├── index.html          # 课程导航首页
-├── docs/               # 推荐从这里看 HTML 讲义
 ├── lessons/            # 15 课 HTML 讲义
 ├── tablet/             # 平板/离线自包含版（单文件，可直接传到手机/平板看）
 ├── reference/          # 术语表等参考
