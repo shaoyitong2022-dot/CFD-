@@ -257,7 +257,8 @@ footer.lesson-foot a:hover { text-decoration: underline; }
 <script>
 MathJax = { tex: { inlineMath: [['$', '$']] } };
 </script>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+<script src="../assets/mathjax/es5/tex-mml-chtml.js" defer>
+</script>
 </head>
 <body>
 <div class="page">
@@ -292,7 +293,7 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   <dd>不同频率的波以不同数值速度传播，导致波前振荡、拖尾（非物理的"涟漪"）。</dd>
 
   <dt>迎风格式 <span class="en">upwind scheme</span></dt>
-  <dd>导数差分方向顺着来流方向取（风从左边来就向左边取点），让格式稳定。CFDPython Step 1 的向前差分正是原始的迎风思想。</dd>
+  <dd>导数差分方向顺流场方向取（风从左边来，就向左边的点取差分），让格式稳定。CFDPython Step 1 对流项用的是<strong>空间后向差分</strong>（取 $i-1$），配合<strong>时间前向差分</strong>，正是迎风思想的最小体现。</dd>
 
   <dt>通量 <span class="en">flux</span></dt>
   <dd>物理量穿过单位截面的输运率（质量/动量/能量）。守恒律 PDE 的标准写法 $\partial_t u + \nabla\cdot F = 0$ 中的一切都在 $F$ 里。</dd>

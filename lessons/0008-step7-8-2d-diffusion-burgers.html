@@ -8,7 +8,8 @@
 <script>
 MathJax = { tex: { inlineMath: [['$', '$']] } };
 </script>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+<script src="../assets/mathjax/es5/tex-mml-chtml.js" defer>
+</script>
 </head>
 <body>
 <div class="page">
@@ -153,7 +154,7 @@ x 非线性对流 = 0007 的 Step 6 那项；y 非线性对流 = 0007 那项；�
 <div class="a">2D：$\Delta t = \sigma\frac{\Delta x\,\Delta y}{\nu}$（σ 取 0.25，安全域）；1D：$\Delta t = \sigma\frac{\Delta x^2}{\nu}$（σ 取 0.2）。差别在分子 $\Delta x\Delta y$ vs $\Delta x^2$——2D 两个方向同时扩散，时间步要更保守。</div></details>
 
 <details class="quiz"><summary>Q2 · 二维二阶差分模板把 -2 出现在哪里？为什么？</summary>
-<div class="a">x、y 两个方向各自模板的中间项都含 $-2u_{i,j}$，加起来出现 $2\times(-2u_{i,j})$=-4 对中心——不，精确说是两个独立的 -2 各自贡献一次（代码里两个 <code>2*un[1:-1,1:-1]</code>）。看到两个 <code>-2*中心</code> 就是二维二阶导的签名。</div></details>
+<div class="a">x、y 两个方向各自模板的中间项都含 $-2u_{i,j}$，代码里对应两个独立的 <code>2*un[1:-1,1:-1]</code>。看到两个 <code>-2*中心</code> 就是二维二阶导的签名。</div></details>
 
 <details class="quiz"><summary>Q3 · Step 8 的 u 更新公式里，哪些项用 un、哪些用 vn？为什么？</summary>
 <div class="a">x 方向自身搬运用 un（速度=u），y 方向被 v 搬运用 vn，两个扩散项也都用 un（被扩散的是 u 本身）。v 方程同理倒过来。用哪份快照取决于"谁是搬运者、谁是被搬运的量"。</div></details>

@@ -257,7 +257,8 @@ footer.lesson-foot a:hover { text-decoration: underline; }
 <script>
 MathJax = { tex: { inlineMath: [['$', '$']] } };
 </script>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+<script src="../assets/mathjax/es5/tex-mml-chtml.js" defer>
+</script>
 </head>
 <body>
 <div class="page">
@@ -405,7 +406,7 @@ for i in range(1000):                         # 训练 1000 步
 <div class="a">x[0:200:20]：500 点里只取前 200 个（t≤0.4）、每隔 20 取 1 → 下标 0,20,…,180 共 10 个点。B 轨和 0001 切片是同一招。</div></details>
 
 <details class="quiz"><summary>Q3 · FCN(1,1,32,3) 各参数是什么意思？</summary>
-<div class="a">N_INPUT=1（输入 t）、N_OUTPUT=1（输出 u）、N_HIDDEN=32（隐藏层宽度）、N_LAYERS=3（总层数=1输入层+1隐藏+1输出，中间经 fch 有 N_LAYERS-1=2 个 Tanh）。</div></details>
+<div class="a">N_INPUT=1（输入 t）、N_OUTPUT=1（输出 u）、N_HIDDEN=32（隐藏层宽度）。<strong>N_LAYERS=3 指的是中间隐藏块的数量再加 1</strong>：按代码结构，实际是 <code>fcs</code>（1 个 Linear+Tanh）+ <code>fch</code> 里 <code>N_LAYERS-1=2</code> 个 (Linear+Tanh) + <code>fce</code>（1 个 Linear），合计 <strong>4 个 Linear 层、3 个 Tanh</strong>。所以 N_LAYERS 与其说"总层数"不如说"隐藏块数+1"——层数偏多的时候容易记混，写代码时要回到 FCN 的 fcs/fch/fce 三段结构去数。</div></details>
 
 <details class="quiz"><summary>Q4 · 为什么 PINN 常用 tanh 而非 ReLU？</summary>
 <div class="a">要多次求导（torch.autograd 会对输出算一阶、二阶导），tanh 处处光滑可导、导数行为良好；ReLU 二阶导在 0 处不存在，会让物理损失不稳。</div></details>

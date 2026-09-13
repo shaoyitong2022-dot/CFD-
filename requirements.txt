@@ -1,0 +1,17 @@
+# 本教程的运行依赖（A 轨 + B 轨 + C 轨）
+# 建议用 conda 建一个环境（见 README 快速开始）
+
+# --- A 轨：CFDPython 12 步（NumPy 求解器）---
+numpy>=1.24
+matplotlib>=3.7
+scipy>=1.10
+sympy>=1.11
+
+# --- B 轨：谐振子 PINN（torch.autograd 物理损失）---
+# torch 建议按官方镜像安装以获得 CUDA 版本，见注释
+#  CPU 版：pip install torch
+# `neuraloperator`（FNO 轨）如需，另行安装
+
+# --- Notebook 环境 ---
+jupyter>=1.0
+ipykernel>=6.0

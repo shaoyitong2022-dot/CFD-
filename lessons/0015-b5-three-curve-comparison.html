@@ -8,7 +8,8 @@
 <script>
 MathJax = { tex: { inlineMath: [['$', '$']] } };
 </script>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+<script src="../assets/mathjax/es5/tex-mml-chtml.js" defer>
+</script>
 </head>
 <body>
 <div class="page">
@@ -65,26 +66,45 @@ FDM 误差=截断误差（O(Δt)），步长越小越准，且完全确定（无
 
 <h2>3 · 拼出三线图</h2>
 
-<pre><code>import matplotlib.pyplot as plt
+<p>为了让本课可以<strong>独立运行</strong>（不依赖前面 notebook 里残留的 <code>model</code>/<code>x</code> 张量），下面把解析解在 numpy 端重新生成一份，并给出两套 PINN 预测方式：</p>
 
-# 解析解（B1/B2 的 oscillator，torch 张量）
-t_an = x_full.numpy()  # 或用 np 版本重建，端点一致即可
-u_an = y_true.numpy()
+<pre><code>import numpy as np
+import matplotlib.pyplot as plt
+import torch
 
-# FDM
-u_fdm = x            # 上面的 numpy 数组
+# ---- 解析解（numpy 版，重新生成；对应 B1/B2 的 oscillator）----
+def osc_np(d, w0, t):
+    w = np.sqrt(w0**2 - d**2)
+    phi = np.arctan(-d/w)
+    A = 1 / (2*np.cos(phi))
+    return np.exp(-d*t) * 2*A * np.cos(phi + w*t)
 
-# PINN（B4 训练好的 model）
-with torch.no_grad():
-    u_pinn = model(t_eval).numpy()   # t_eval 是测试网格
+T = 1.0
+t_eval_np = np.linspace(0, T, 500)      # 统一画图网格（numpy）
+u_an = osc_np(d, w0, t_eval_np)         # 解析解
+
+# ---- FDM（沿用 §2 算出的 t_fdm / x）----
+u_fdm = x                                # §2 里前向 Euler 的结果
+
+# ---- PINN 预测（本课不加 train，直接用 B4 已训好的 model）----
+t_eval = torch.from_numpy(t_eval_np)[:, None]   # 转成 torch 列向量喂给网络
+u_pinn = model(t_eval).detach().numpy().ravel() # B4 训好的 model 前向
 
 plt.figure(figsize=(9,4))
-plt.plot(t_an,  u_an,   'k-',  lw=2, label='Analytical')
-plt.plot(t_fdm, u_fdm,  'b--', lw=2, label='FDM (Euler)')
-plt.plot(t_eval, u_pinn, 'r:',  lw=2, label='PINN')
+plt.plot(t_eval_np, u_an,    'k-',  lw=2, label='Analytical')
+plt.plot(t_fdm,     u_fdm,   'b--', lw=2, label='FDM (Euler)')
+plt.plot(t_eval_np, u_pinn,  'r:',  lw=2, label='PINN')
 plt.xlabel('t'); plt.ylabel('u(t)')
 plt.legend()
-plt.title('Damped oscillator: Analytical vs FDM vs PINN')</code></pre>
+plt.title('Damped oscillator: Analytical vs FDM vs PINN')
+plt.show()</code></pre>
+
+<div class="box">
+<span class="box-title">◆ 如果你没先跑完 B4 拿到训练好的 model</span>
+上段里的 <code>model</code> 来自你 B4 训练结束后的那个网络对象。若此时是全新 notebook 且没有 model，可临时用下面一行跳过 PINN 线（只对比解析 vs FDM）：<br>
+<code>u_pinn = np.nan * t_eval_np</code>（得到一个全 NaN 线，图上不显示）。<br>
+跑通两线对比后，再回 B4 把训练好、外推也准的那个 <code>model</code> 带过来补上红线。
+</div>
 
 <p>预期：三条线在中段高度重合；细看能在 FDM（随 t 轻微衰减偏差）和 PINN（可能在小幅抖动）上找到各自的特征——它们正是误差来源的"指纹"。</p>
 

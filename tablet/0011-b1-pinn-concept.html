@@ -257,7 +257,8 @@ footer.lesson-foot a:hover { text-decoration: underline; }
 <script>
 MathJax = { tex: { inlineMath: [['$', '$']] } };
 </script>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+<script src="../assets/mathjax/es5/tex-mml-chtml.js" defer>
+</script>
 </head>
 <body>
 <div class="page">
@@ -322,7 +323,7 @@ $$
 
 <div class="box">
 <span class="box-title">◆ 为什么选谐振子做第一个 PINN，而不是直接上 Burgers</span>
-① 一阶 ODE/PDE 里的最简单非线性；② 只有一个时间自变量（无空间网格）；③ 有解析解当裁判；④ 纯 PyTorch 几十行。官方顺序同理：先学会"把微分方程残差加进损失"，再给 2D 问题加维度。你 A 轨的 Burgers FDM 基准，是以后验证"PINN 解 Burgers 准不准"的对照组。
+① 只有一个时间自变量（无空间网格），是二阶线性常微分方程，残差形式最简单、适合首次接触 physics loss；② 有解析解当裁判；③ 纯 PyTorch 几十行。官方顺序同理：先学会"把微分方程残差加进损失"，再给 PDE（如 Burgers，含非线性与空间维度）加难度。你 A 轨的 Burgers FDM 基准，是以后验证"PINN 解 Burgers 准不准"的对照组。
 </div>
 
 <h2>4 · 数据饥饿与解析解：本课的"实验设计"</h2>

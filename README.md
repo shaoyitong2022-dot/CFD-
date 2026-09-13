@@ -52,6 +52,8 @@ cd CFD-
 conda create -n cfd python=3.10
 conda activate cfd
 conda install -c conda-forge numpy matplotlib sympy scipy jupyter
+# B 轨（PINN）还需要 PyTorch，按官方镜像装 CPU 版：
+conda install pytorch torchvision torchaudio cpuonly -c pytorch
 
 # 3. 打开教程导航页（或用浏览器直接打开 index.html）
 index.html              # 课程导航（15 课索引）
@@ -73,20 +75,27 @@ index.html              # 课程导航（15 课索引）
 ```
 ├── index.html          # 课程导航首页
 ├── lessons/            # 15 课 HTML 讲义
-├── tablet/             # 平板/离线自包含版（单文件，可直接传到手机/平板看）
+├── tablet/             # 平板/离线版（CSS 已内联，数学公式走本地 assets/mathjax，保留整个仓库即可离线看）
 ├── reference/          # 术语表等参考
+├── requirements.txt    # 运行依赖（numpy/matplotlib/sympy/scipy/jupyter/torch）
 ├── code/
-│   └── cfdpython-repo/ # 官方 CFDPython 原始 notebook（教材底本）
-└── LICENSE             # CC-BY 4.0
+│   ├── cfdpython-repo/         # 官方 CFDPython 原始 notebook（教材底本，BSD-3/CC-BY）
+│   └── harmonic-oscillator-pinn/  # Ben Moseley 的 PINN notebook（B 轨，MIT）
+└── LICENSE             # 原创讲义的 CC-BY 4.0（第三方内容见 code/ 内各自许可）
 ```
 
 ## 致谢与许可
 
-- 课程内容建立在 **Prof. Lorena A. Barba 与 Gilbert F. Forsyth 的 [CFD Python](https://github.com/barbagroup/CFDPython)** 之上，系其官方教程的中文本土化 + 逐行注释扩展。引用请见其 JOSS 论文：
+本仓库内含不同来源、不同许可的内容，使用时请分别对待：
+
+- **原创讲义**（`lessons/`、`reference/`、`index.html` 及本 README）：本文所撰写的讲解、示意图、自测题与中文组织，采用 **[CC-BY 4.0](LICENSE)**。
+- **改编自官方 CFDPython** 的讲解：课程内容建立在 **Prof. Lorena A. Barba 与 Gilbert F. Forsyth 的 [CFD Python](https://github.com/barbagroup/CFDPython)** 之上，引用请见其 JOSS 论文：
   > Barba, L. A., & Forsyth, G. F. (2018). CFD Python: the 12 steps to Navier–Stokes equations. *Journal of Open Source Education*, 1(9), 21. https://doi.org/10.21105/jose.00021
-- 原始官方教学内容：CC-BY 4.0；官方代码：BSD-3。
-- 本仓库全部讲义与代码：**[CC-BY 4.0](LICENSE)**。
-- 若你使用本仓库，欢迎保留原课程署名，并 Star 支持。
+  其**原始教学内容**采用 **CC-BY 4.0**，**原始代码**采用 **BSD-3-Clause**。
+- **内嵌第三方仓库**（`code/`）：
+  - `cfdpython-repo/`：Barba & Forsyth 的 CFDPython（教材底本），代码 BSD-3、内容 CC-BY；
+  - `harmonic-oscillator-pinn/`：Ben Moseley 的 PINN notebook，**[MIT License](code/harmonic-oscillator-pinn/LICENSE)**。
+- 使用本仓库时，请保留以上原始署名与各许可证声明。
 
 ## 后续扩展（另见其他仓库）
 
