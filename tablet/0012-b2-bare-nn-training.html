@@ -127,6 +127,9 @@ pre code {
   display: block;
   margin-bottom: 0.4rem;
 }
+/* 补给箱语义变体：取代曾散落各页的行内样式，改色只改这里 */
+.box.prep   { border-left-color: #2563eb; }   /* 课前补给：蓝 */
+.box.deepen { border-left-color: #d97706; }   /* 补强/深化：琥珀 */
 
 /* ---------- 今日战果 ---------- */
 .win {
@@ -219,6 +222,7 @@ footer.lesson-foot .nav {
   gap: 1rem;
   flex-wrap: wrap;
 }
+footer.lesson-foot p { margin-top: 0.8rem; }
 footer.lesson-foot a { color: var(--accent); text-decoration: none; }
 footer.lesson-foot a:hover { text-decoration: underline; }
 
@@ -269,6 +273,20 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   <p class="meta">预计 45–55 分钟 ｜ 教材：官方 <code>harm-osc PINN.ipynb</code> 的前半段（"Normal neural network"）｜ <a href="0011-b1-pinn-concept.html">← 前置 B1</a></p>
 </header>
 
+<div class="box prep">
+  <span class="box-title">◆ 课前补给 · 训练循环的骨架</span>
+  <p><strong>上一课你做到：</strong>明白了裸网络只会插值、不懂物理。→ <strong>这一课往前一步：</strong>亲手把训练循环写出来，<strong>亲眼看到它出数据区就乱猜</strong>。</p>
+  <p><strong>代码补给⑪（训练四步，所有深度学习的骨架）：</strong></p>
+  <pre><code>for epoch in range(n_epochs):
+    optimizer.zero_grad()   # ① 清空上一轮的梯度
+    loss = criterion(y_pred, y_train)   # ② 算损失
+    loss.backward()         # ③ 反向传播
+    optimizer.step()        # ④ 更新参数</code></pre>
+  <p>漏掉 <code>zero_grad()</code> 会让梯度累积——这是新手最常见的错误，而且不报错。</p>
+  <p><strong>物理补给（本轨改补"优化直觉"）：</strong>B 轨的物理不再增加，补的是另一件事——<strong>优化过程本身</strong>。看到裸 NN 在数据区外乱猜，就是"没有归纳偏置"的直接证据。<strong>这个失败是故意的，别跳过它。</strong></p>
+</div>
+
+
 <div class="win">
   <span class="box-title">✦ 本课收获</span>
   ① 在 PyTorch 里定义一个全连接网络（FCN）类，看懂 pytorch 的 `nn.Sequential`、`nn.Linear`、`Tanh`；<br>
@@ -276,6 +294,17 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   ③ 亲眼看到裸 NN 在 10 个训练点附近拟合完美、出区间乱猜——为 B4 里"物理救场"做铺垫。
 </div>
 
+
+<div class="box deepen">
+  <span class="box-title">◆ 物理补强｜本课会用到的基石（优化直觉补充）</span>
+  本课看裸神经网络为什么"只会插值"，补一条核心的机器学习直觉：
+  <ul>
+    <li><strong>插值 vs 泛化</strong>：网络能把它见过的（训练区间内的）数据点拟合得很准，这是插值；能被要求预测没见过的（区间外的）输入，才是泛化。裸 NN 没有额外约束时，只有前者——出数据区就"自由发挥"。</li>
+    <li><strong>训练 = 相对拟合目标做梯度下山</strong>：损失函数度量"网络输出离数据有多远"，优化器（Adam）只朝损失减小方向调权重。它没有任何"解该满足物理规律"的意识，所以只要数据稀疏，它就把空间填成最光滑、最容易拟合的形状。</li>
+    <li><strong>"拟合好 ≠ 答对"</strong>：10 个点附近 loss 降到很小，只说明网络"背"下了这 10 个点，不说明它理解背后的物理。这是后面强调"物理损失"来弥补的关键缺口。</li>
+  </ul>
+  与代码的关系：训练循环 <code>forward → loss → backward → step</code> 全体作用就是"沿着 loss 关于权重的梯度往下走"。你会在 t&gt;0.4 处看到曲线"乱猜"，那正是"只有数据、没有物理"的直接后果。
+</div>
 <h2>1 · 本课的"实验剧本"（回忆 B1）</h2>
 
 <p>重复设定：欠阻尼振子 $\delta=2,\omega_0=20$。训练数据只有 10 个点（t∈[0,0.4]），分布在前 0.4 周期。B2 只用数据损失训练：</p>
@@ -430,7 +459,7 @@ Moseley <code>harmonic-oscillator-pinn</code>（GitHub）：本仓库 <code>Harm
     <span><a href="../reference/glossary.html">术语表</a></span>
     <span>下一课：0013 · B3 autograd 与物理损失</span>
   </div>
-  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0012 课 · 2026-09-11</p>
+  <p>CFDPython 双轨课程 · 第 0012 课 · 2026-09-11</p>
 </footer>
 
 </div>

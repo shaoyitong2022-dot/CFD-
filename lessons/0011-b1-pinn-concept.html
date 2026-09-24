@@ -20,6 +20,16 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   <p class="meta">预计 40 分钟（概念课，几乎没有代码）｜ 教材：<a href="https://benmoseley.blog/my-research/so-what-is-a-physics-informed-neural-network/">Moseley, So, what is a physics-informed neural network?</a> ｜ <a href="../reference/glossary.html">术语表</a></p>
 </header>
 
+<div class="box prep">
+  <span class="box-title">◆ 课前补给 · 换一种解法</span>
+  <p><strong>上一课你做到：</strong>A 轨收官，手上有了 FDM 基准线。→ <strong>这一课往前一步：</strong>换一条完全不同的路——<strong>让神经网络来解方程</strong>。</p>
+  <p><strong>代码补给（张量）：</strong>本课还不用写代码，只需知道一件事：<code>torch.Tensor</code> 是<strong>能自动求导的数组</strong>。0012、0013 会真正用到它。</p>
+  <p><strong>物理补给（为什么 B 轨排在最后）：</strong><strong>B 轨不再需要任何新的流体概念</strong>——阻尼谐振子是力学系统，不是流体。<br>
+  这个顺序是刻意的：先把流体的事在 A 轨学完，再用一个足够简单的系统，专心学"怎么把物理塞进网络"。<br>
+  <strong>归纳偏置</strong>是本节关键词：网络只会做它被训练去做的事，不会自动懂物理——这正是 B 轨要解决的问题。</p>
+</div>
+
+
 <div class="win">
   <span class="box-title">✦ 本课收获</span>
   ① 用自己的话讲清<strong>为什么裸神经网络出不了插值区就乱猜</strong>——并认识"归纳偏置"一词；<br>
@@ -27,6 +37,17 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   ③ 看懂 PINN 的损失函数 = 数据损失 + 物理损失，并预判"数据不足时哪个项救场"。
 </div>
 
+
+<div class="box deepen">
+  <span class="box-title">◆ 物理补强｜本课会用到的基石（机器直觉补充）</span>
+  B 轨主体是 PINN，不全是流体，但这里补一条理解 PINN 思路的机器直觉：
+  <ul>
+    <li><strong>归纳偏置（inductive bias）= 你提前告诉模型"解应该长什么样"</strong>：裸神经网络没有先验，只会拟合喂进去的数据点（插值）；PINN 把"该满足微分方程"塞进损失里，等于给模型加了一条物理先验，让它在数据稀疏处也能正确外推。</li>
+    <li><strong>数据 vs 物理，是两种"老师"</strong>：数据损失用观测值教，物理损失用方程教。数据不足时，物理项"救场"；噪声大时，对物理的信任能压制对噪声的过拟合——这是本阶段最值得留住的一个心智模型。</li>
+    <li><strong>涨阻尼振子也是"物理系统"</strong>：虽然不复流体，但 $m\ddot x+\mu\dot x+kx=0$ 一样是"方程约束解"，PINN 的思路和后面解 PDE 完全同构——学会了振子，你就学会了给任何方程加物理损失。</li>
+  </ul>
+  与代码的关系：本课没有大段代码，但你要在脑里建立核心等式 <code>loss = loss_data + loss_physics</code>，并清楚每一项各约束解的一个方面。
+</div>
 <h2>1 · 从"你的 Burgers 基准"说起：另一条路</h2>
 
 <p>你在 A 轨已经知道：解微分方程的传统路数是 FDM（离散网格、迭代推进）。这里要认识另一条路——<strong>把解"假装成一个神经网络"，让方程本身当老师去训练它</strong>。这就是 PINN（Physics-Informed Neural Network，Raissi et al. 2019）。</p>
@@ -124,7 +145,7 @@ PINN 开山论文（认识一下，以后套磁用得着）：<a href="https://w
     <span><a href="../reference/glossary.html">术语表</a></span>
     <span>下一课：0012 · B2 裸 NN 与训练循环</span>
   </div>
-  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0011 课 · 2026-09-11</p>
+  <p>CFDPython 双轨课程 · 第 0011 课 · 2026-09-11</p>
 </footer>
 
 </div>

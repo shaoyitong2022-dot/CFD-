@@ -127,6 +127,9 @@ pre code {
   display: block;
   margin-bottom: 0.4rem;
 }
+/* 补给箱语义变体：取代曾散落各页的行内样式，改色只改这里 */
+.box.prep   { border-left-color: #2563eb; }   /* 课前补给：蓝 */
+.box.deepen { border-left-color: #d97706; }   /* 补强/深化：琥珀 */
 
 /* ---------- 今日战果 ---------- */
 .win {
@@ -219,6 +222,7 @@ footer.lesson-foot .nav {
   gap: 1rem;
   flex-wrap: wrap;
 }
+footer.lesson-foot p { margin-top: 0.8rem; }
 footer.lesson-foot a { color: var(--accent); text-decoration: none; }
 footer.lesson-foot a:hover { text-decoration: underline; }
 
@@ -269,12 +273,38 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   <p class="meta">预计 40–50 分钟 ｜ 教材：<code>code\cfdpython-repo\lessons\01_Step_1.ipynb</code> ｜ <a href="../reference/glossary.html">术语表</a></p>
 </header>
 
+<div class="box prep">
+  <span class="box-title">◆ 课前补给 · 让场动起来</span>
+  <p><strong>上一课你做到：</strong>造出了一个静止的场。→ <strong>这一课往前一步：</strong>让它整体<strong>搬走</strong>。</p>
+  <p><strong>代码补给②（copy，本课最重要）：</strong></p>
+  <pre><code>u = numpy.ones(nx)      # 全 1 的背景场
+u[10:20] = 2            # 中间抬高 → 帽子
+un = u.copy()           # ★ 必须 copy，不能写 un = u</code></pre>
+  <p><strong>为什么不能省：</strong><code>un = u</code> 只是给同一块内存贴了个新名字，改一个另一个跟着变。而更新公式右边用的全是<strong>上一时刻</strong>的值——不 copy 就会边算边污染。<br>
+  <strong>它不报错</strong>，只会让结果悄悄错，图画出来往往还"看着挺像回事"。这是本门课最阴的一个坑。</p>
+  <p><strong>物理补给②（对流）：</strong>帽子整体右移、<strong>形状保持不变</strong>——这就是"对流"的物理签名。<br>
+  信息沿着一条叫<strong>特征线</strong>的线传播，那条线的斜率就是波速。记住这个画面，0004 的 CFL 会直接从它长出来。</p>
+</div>
+
+
 <div class="win">
   <span class="box-title">✦ 本课收获（两个）</span>
   ① 亲手把人生第一个 PDE 离散成可在电脑上计算的公式，并用两层循环写成一个能跑的数值求解器；<br>
   ② 亲眼看到初始的"方帽"在传播中变形——并知道这是<strong>数值耗散</strong>在作祟（这是后面所有课的引子）。
 </div>
 
+
+<div class="box deepen">
+  <span class="box-title">◆ 物理补强｜本课会用到的流体力学基石</span>
+  如果这几条你还没学过，只补它们就够读本课：
+  <ul>
+    <li><strong>标量场 vs 速度场的区别</strong>：本课 $u$ 是<strong>标量场</strong>——每点只有一个数（可理解为浓度、温度）。真实流体速度是矢量场（每点有两个/三个分量），那是后面腔流才遇到的。先分清：<strong>标量=一个数，矢量=多个数的箭头</strong>。</li>
+    <li><strong>对流（advection）= 整体搬运，不改变形状</strong>：某处的场值之所以变，是因为上游的东西被速度 $c$ 搬过来了，而不是"自己长大"，所以形状只是平移。这是"线性 = 搬运不变形"的物理根子。</li>
+    <li><strong>特征线：信息沿着它传播</strong>：对这条方程，每团场值都定速 $c$ 向右移动，画在 $(x,t)$ 平面是一族斜线 $dx/dt=c$，叫<strong>特征线</strong>。CFL 专章（0004）全靠它解释"信息每步传多远"。</li>
+    <li><strong>定常 vs 非定常</strong>：$\partial_t u\neq0$ 意味着场随时间是变化的（非定常）；若 $\partial_t u=0$ 则是定常/稳态。本课是前者——你后面会遇到只有 $\partial_t=0$ 的稳态问题（0009）。</li>
+  </ul>
+  与代码的关系：特征线方向决定空间差分该"向哪边取点"（迎风）；本课代码里那个 $c\frac{\Delta t}{\Delta x}(u_i-u_{i-1})$ 正是"沿特征线搬运了一小步"。
+</div>
 <h2>1 · 我们先说清楚：这条方程在讲什么</h2>
 
 <p>这条方程只有两个速度，却承载了 CFD 一半的核心直觉：</p>
@@ -478,7 +508,7 @@ Barba &amp; Forsyth, <em>CFD Python</em>, Step 1：本地 <code>code\cfdpython-r
     <span><a href="../reference/glossary.html">术语表</a></span>
     <span>下一课：<a href="0003-step2-nonlinear-convection.html">0003 · Step 2 非线性对流</a></span>
   </div>
-  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0002 课 · 2026-09-11</p>
+  <p>CFDPython 双轨课程 · 第 0002 课 · 2026-09-11</p>
 </footer>
 
 </div>

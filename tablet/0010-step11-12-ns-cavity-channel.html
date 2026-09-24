@@ -127,6 +127,9 @@ pre code {
   display: block;
   margin-bottom: 0.4rem;
 }
+/* 补给箱语义变体：取代曾散落各页的行内样式，改色只改这里 */
+.box.prep   { border-left-color: #2563eb; }   /* 课前补给：蓝 */
+.box.deepen { border-left-color: #d97706; }   /* 补强/深化：琥珀 */
 
 /* ---------- 今日战果 ---------- */
 .win {
@@ -219,6 +222,7 @@ footer.lesson-foot .nav {
   gap: 1rem;
   flex-wrap: wrap;
 }
+footer.lesson-foot p { margin-top: 0.8rem; }
 footer.lesson-foot a { color: var(--accent); text-decoration: none; }
 footer.lesson-foot a:hover { text-decoration: underline; }
 
@@ -269,6 +273,23 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   <p class="meta">预计 75–90 分钟（A 轨大结局）｜ 教材：<code>code\cfdpython-repo\lessons\14_Step_11.ipynb</code> 与 <code>15_Step_12.ipynb</code> ｜ <a href="0009-step9-10-laplace-poisson.html">← 前置 0009</a></p>
 </header>
 
+<div class="box prep">
+  <span class="box-title">◆ 课前补给 · A 轨收官，最重要的一节</span>
+  <p><strong>上一课你做到：</strong>会解稳态的 Poisson 方程了。→ <strong>这一课往前一步：</strong>直面真实流体的方程，以及那个<strong>凭空冒出来的压力泊松</strong>。</p>
+  <p><strong>代码补给⑩（函数化）：</strong>把各步封装成函数，主程序只剩几行——这就是"solver.py"的雏形。</p>
+  <pre><code>def build_up_b(b, rho, dt, u, v, dx, dy): ...   # 右端项
+def pressure_poisson(p, dx, dy, b): ...          # 压力迭代</code></pre>
+  <p><strong>物理补给⑩（三件事，缺一不可）：</strong></p>
+  <p><strong>① 物质导数</strong> $\dfrac{\mathrm{D}}{\mathrm{D}t}=\partial_t+\vec u\cdot\nabla$：第一项是"站在原地看"，第二项是"因为自己移动而顺路捎上的变化"。<strong>第二项就是 N-S 非线性的来源，也是它难的根本原因。</strong></p>
+  <p><strong>② 不可压</strong> $\nabla\cdot\vec u=0$：没有任何东西在某处凭空产生或消失。</p>
+  <p><strong>③ 压力泊松为什么冒出来</strong>（逻辑只有三行）：<br>
+  · 动量方程推进得到的中间速度场 $\vec u^*$ 带散度、<strong>不合法</strong>；<br>
+  · 唯一的修法是减去压力梯度：$\vec u^{n+1}=\vec u^*-\Delta t\,\nabla p$；<br>
+  · 对新场取散度并令其为零 → $\nabla^2 p=\dfrac{1}{\Delta t}\nabla\cdot\vec u^*$。<br>
+  <strong>压力不是被"解出来"的物理量，它是不可压约束的 Lagrange 乘子</strong>——职责就是恰好大到把散度压成零。这一步就是投影法。</p>
+</div>
+
+
 <div class="win">
   <span class="box-title">✦ 本课收获（A 轨收官）</span>
   ① 用前 10 课的积木搭出第一个 <strong>不可压 Navier-Stokes 求解器</strong>——腔流（lid-driven cavity）：盖子拖动、内部生旋涡；<br>
@@ -276,6 +297,18 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   ③ 在 Step 12 体验周期边界与恒定驱动源项 $F$，把 0006 的周期边界、0009 的迭代法全串起来。
 </div>
 
+
+<div class="box deepen">
+  <span class="box-title">◆ 物理补强｜本课会用到的流体力学基石</span>
+  A 轨大结局，所有物理补强在此汇流，本课补的是 N-S 方程本身的语义：
+  <ul>
+    <li><strong>物质导数 $\frac{D\vec u}{Dt}=\frac{\partial\vec u}{\partial t}+(\vec u\cdot\nabla)\vec u$</strong>：左边括号里第一项是"本地变化"，第二项是"对流（跟流走时看到的变化）"。N-S 的动量方程读作 <strong>$\rho\frac{D\vec u}{Dt}=-\nabla p+\text{黏性项}$</strong>——流体加速来自压力梯度与黏性应力，别无其他。</li>
+    <li><strong>不可压缩就是"速度场无源" $\nabla\cdot\vec u=0$</strong>：质量守恒 + 密度不变 $\Rightarrow$ 流进等于流出。它没有"时间演化"，是个<strong>即时约束</strong>——这就是 N-S 真正难的地方：压力没有自己的方程，它必须被"解"出来让每个时刻 $\nabla\cdot\vec u=0$ 始终成立。</li>
+    <li><strong>雷诺数定位流动状态</strong>：$\mathrm{Re}=\frac{\rho U L}{\mu}=\frac{UL}{\nu}$（$U$ 特征速度、$L$ 特征尺度）。Re 小=黏性占优→平稳层流；Re 大=惯性占优→不稳定、湍流。腔流/通道流都是层流的入门对象。</li>
+    <li><strong>简单剪切流的关键形象</strong>：腔流（lid-driven）是盖子拖动物体底部产生剪切，速度从顶板的 $u=\text{const}$ 渐变到底板的 0；通道流靠压力梯度驱动。看到"由边界/压力拖动的剪切"就理解了这类流动。</li>
+  </ul>
+  与代码的关系：动量方程离散后得到"候选速度"（uv），因为它不一定无源；压力泊松方程（用 0009 的迭代法）求出 $p$，再用 $p$ 修正速度，让它满足 $\nabla\cdot\vec u=0$——这就是课里"投影法"代法的由来。
+</div>
 <h2>1 · 我们在解什么：不可压 NS 的三条方程</h2>
 
 <p>速度两个分量（u,v）+ 压力 p。动量守恒 + 连续性（质量守恒）：</p>
@@ -457,7 +490,7 @@ Barba &amp; Forsyth, <em>CFD Python</em>, Step 11（14）/ Step 12（15）。配
     <span><a href="../reference/glossary.html">术语表</a></span>
     <span>下一课：0011 · Phase B B1 谐振子 PINN 概念课</span>
   </div>
-  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0010 课 · 2026-09-11</p>
+  <p>CFDPython 双轨课程 · 第 0010 课 · 2026-09-11</p>
 </footer>
 
 </div>

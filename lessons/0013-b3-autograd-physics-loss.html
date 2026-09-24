@@ -20,6 +20,19 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   <p class="meta">预计 60 分钟（本课最慢最细，值得）｜ 教材：官方 notebook 的 "PINN" 段 ｜ <a href="0012-b2-bare-nn-training.html">← 前置 B2</a> ｜ <a href="../reference/glossary.html">术语表</a></p>
 </header>
 
+<div class="box prep">
+  <span class="box-title">◆ 课前补给 · 让网络自己算导数</span>
+  <p><strong>上一课你做到：</strong>训练循环跑通了，也看到它只会插值。→ <strong>这一课往前一步：</strong>教会网络<strong>自己算导数</strong>，把物理定律塞进去。</p>
+  <p><strong>代码补给⑫（autograd，B 轨核心）：</strong></p>
+  <pre><code>x.requires_grad_(True)
+dx  = torch.autograd.grad(y,  x, grad_outputs=torch.ones_like(y),  create_graph=True)[0]
+dx2 = torch.autograd.grad(dx, x, grad_outputs=torch.ones_like(dx), create_graph=True)[0]</code></pre>
+  <p><strong><code>create_graph=True</code> 不能省</strong>——省掉的话，第二次求导时计算图已经被扔了，会直接报错。这是本课唯一必须记住的参数。</p>
+  <p><strong>物理补给（残差）：</strong>把方程写成 $F=0$，把网络的输出代进去，$F$ 不为零的那部分就叫<strong>残差</strong>。<br>
+  物理损失 = 残差的平方和。<strong>它不要求你知道正确答案，只要求你满足定律</strong>——这就是 PINN 能在数据稀缺时仍然工作的原因。</p>
+</div>
+
+
 <div class="win">
   <span class="box-title">✦ 本课收获（Phase B 核心）</span>
   ① 独立写出对 nn 输出求<strong>一阶、二阶导</strong>的 autograd 代码，并理解 `requires_grad_` 和 `create_graph=True` 的含义；<br>
@@ -27,6 +40,17 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   ③ 用手算验证：当解恰好满足方程时，物理损失为 0。
 </div>
 
+
+<div class="box deepen">
+  <span class="box-title">◆ 物理补强｜本课会用到的基石（微分/代码直觉补充）</span>
+  本课是 autograd 与"把方程翻译成残差"，补一条最关键的道理：
+  <ul>
+    <li><strong>导数 = 局部变化率，链式法则把"复合"拆成乘法</strong>：反导的本质是链式法则在复合函数上的自动执行。要二阶导只需对一阶导再求一次导——前提是保留计算图（<code>create_graph=True</code>）。</li>
+    <li><strong>方程的残差 = 解还欠多少</strong>：把网络输出代进 $m\ddot x+\mu\dot x+kx=0$，右边若恒为 0 说明网络就是真解；不为 0 的部分就是<strong>残差（residual）</strong>，物理损失就把所有残差的平方和最小化，逼它归零。</li>
+    <li><strong>它和 A 轨你手算的"差分残差"同源</strong>：FDM 用差分模板近似导数、看方程差多少；这里用 autograd 精确求导、看方程差多少。同一个词 residual，只是求导工具不同。</li>
+  </ul>
+  与代码的关系：<code>autograd.grad</code> 替你算出 $\ddot x$ 和 $\dot x$，<code>dx2 + mu*dx + k*y</code> 那行就是残差本身；<code>1e-4*mean(physics²)</code> 把残差转成损失。先对 sin(x) 练手、对照解析导数值到 <1e-8，是为确认 autograd 正确可靠。
+</div>
 <h2>1 · 为什么 PINN 需要"对输入求导"</h2>
 
 <p>物理损失的想法：把网络输出 $u(t)$ 当成"试探解"，代入微分方程。方程右边应该等于 0；网络输出越接近真解，代入后的<strong>残差</strong>越接近 0。但残差里含 $\ddot{x}=d^2 u_{\text{NN}}/dt^2$——我们要对神经网络的<strong>输入 t</strong> 求二阶导。这正是 PyTorch 自动微分在 PINN 里的用武之地：</p>
@@ -173,7 +197,7 @@ Moseley <code>harm-osc PINN.ipynb</code> 的后半段（"PINN" 小节）。<br>
     <span><a href="../reference/glossary.html">术语表</a></span>
     <span>下一课：0014 · B4 PINN 全流程</span>
   </div>
-  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0013 课 · 2026-09-11</p>
+  <p>CFDPython 双轨课程 · 第 0013 课 · 2026-09-11</p>
 </footer>
 
 </div>

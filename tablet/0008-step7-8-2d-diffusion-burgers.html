@@ -127,6 +127,9 @@ pre code {
   display: block;
   margin-bottom: 0.4rem;
 }
+/* 补给箱语义变体：取代曾散落各页的行内样式，改色只改这里 */
+.box.prep   { border-left-color: #2563eb; }   /* 课前补给：蓝 */
+.box.deepen { border-left-color: #d97706; }   /* 补强/深化：琥珀 */
 
 /* ---------- 今日战果 ---------- */
 .win {
@@ -219,6 +222,7 @@ footer.lesson-foot .nav {
   gap: 1rem;
   flex-wrap: wrap;
 }
+footer.lesson-foot p { margin-top: 0.8rem; }
 footer.lesson-foot a { color: var(--accent); text-decoration: none; }
 footer.lesson-foot a:hover { text-decoration: underline; }
 
@@ -269,12 +273,36 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   <p class="meta">预计 50–60 分钟 ｜ 教材：<code>code\cfdpython-repo\lessons\09_Step_7.ipynb</code> 与 <code>10_Step_8.ipynb</code> ｜ <a href="0007-step5-6-2d-convection.html">← 前置 0007</a></p>
 </header>
 
+<div class="box prep">
+  <span class="box-title">◆ 课前补给 · 二维里的积木组装</span>
+  <p><strong>上一课你做到：</strong>升到了二维，学会用切片替代循环。→ <strong>这一课往前一步：</strong>在二维里把两种过程<strong>再组装一次</strong>。</p>
+  <p><strong>代码补给⑧（broadcasting）：</strong>形状不同的数组做运算时，NumPy 自动把小的那个"扩"到匹配——所以一个标量能直接乘上整个数组，不用写循环。</p>
+  <pre><code>u[1:-1,1:-1] = (un[1:-1,1:-1]
+                 - un[1:-1,1:-1]*dt/dx*(un[1:-1,1:-1]-un[:-2,1:-1])   # x 方向对流
+                 - un[1:-1,1:-1]*dt/dy*(un[1:-1,1:-1]-un[1:-1,:-2])   # y 方向对流
+                 + nu*dt/dx**2*(un[2:,1:-1]-2*un[1:-1,1:-1]+un[:-2,1:-1]))  # 扩散</code></pre>
+  <p><strong>物理补给⑧（二维拉普拉斯）：</strong>$\nabla^2=\partial_x^2+\partial_y^2$——两个方向各算一次再相加。<br>
+  扩散是<strong>各向同性</strong>的：它没有偏爱方向，所以用的是中心差分（对称），而不是对流那种有方向的迎风格式。</p>
+</div>
+
+
 <div class="win">
   <span class="box-title">✦ 本课收获</span>
   ① 把一维扩散公式推广到二维（两个二阶导相加），并掌握 2D 扩散的稳定取法（含 <code>dx*dy</code> 组合）；<br>
   ② 完成 Step 8：二维 Burgers 方程（非线性对流 + 扩散全耦合）——<strong>你的 Burgers 主线 FDM 基准至此成型</strong>。
 </div>
 
+
+<div class="box deepen">
+  <span class="box-title">◆ 物理补强｜本课会用到的流体力学基石</span>
+  本课不需要新的物理概念，只要把扩散正式放到二维：
+  <ul>
+    <li><strong>拉普拉斯 $\nabla^2$ = 两个方向凹凸之和</strong>：二维扩散方程 $\partial_t u=\nu\nabla^2 u$ 里 $\nabla^2u=\partial^2_x u+\partial^2_y u$。它回答"$u$ 在这点整体（各方向加总）有多凸"，是<strong>各向同性</strong>的——抹平方向不偏爱 $x$ 或 $y$。</li>
+    <li><strong>和各向异性对流相反</strong>：对流有明确方向（沿 $\vec u$），所以有迎风；扩散没有方向偏好，所以用对称的中心差分。这两种模板的差别在整个 CFD 里贯穿。</li>
+    <li><strong>二维稳定约束更严</strong>：每个方向各有一条 $\Delta t\le \frac12\Delta x^2/\nu$，二维同时要两条都满足，所以官方用到 <code>dx*dy</code> 的组合取法。</li>
+  </ul>
+  与代码的关系：$u_{i,j}=u_{i,j} + \frac{\nu\Delta t}{\Delta x^2}(u_{i+1,j}-2u_{i,j}+u_{i-1,j}) + \frac{\nu\Delta t}{\Delta y^2}(u_{i,j+1}-2u_{i,j}+u_{i,j-1})$——就是"$x$ 方向凹凸 + $y$ 方向凹凸"，每根括号就是 0005 那个一维模板在一个轴上的复用。
+</div>
 <h2>1 · Step 7：二维扩散</h2>
 
 <p>方程：</p>
@@ -434,7 +462,7 @@ Barba &amp; Forsyth, <em>CFD Python</em>, Step 7（09）/ Step 8（10）。配�
     <span><a href="../reference/glossary.html">术语表</a></span>
     <span>下一课：0009 · Step 9+10 Laplace 与 Poisson</span>
   </div>
-  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0008 课 · 2026-09-11</p>
+  <p>CFDPython 双轨课程 · 第 0008 课 · 2026-09-11</p>
 </footer>
 
 </div>

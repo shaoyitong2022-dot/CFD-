@@ -20,6 +20,19 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   <p class="meta">预计 40–50 分钟 ｜ 教材：<code>code\cfdpython-repo\lessons\04_Step_3.ipynb</code> ｜ <a href="0004-cfl-condition.html">← 前置 0004 CFL</a> ｜ <a href="../reference/glossary.html">术语表</a></p>
 </header>
 
+<div class="box prep">
+  <span class="box-title">◆ 课前补给 · 第二种基本过程</span>
+  <p><strong>上一课你做到：</strong>学会了用 σ 把搬运管住。→ <strong>这一课往前一步：</strong>认识<strong>第二种过程</strong>——不是搬走，是<strong>抹平</strong>。</p>
+  <p><strong>代码补给⑤（empty 与二阶模板）：</strong></p>
+  <pre><code>un = numpy.empty(nx)   # 不清零（省一次操作），因为马上被 un = u.copy() 全覆盖
+...</code></pre>
+  <p><code>empty</code> 拿到的可能是上一块内存的垃圾值。<strong>判据：每个位置你都确定要写，才用 empty；否则用 zeros。</strong></p>
+  <pre><code>u[i+1] - 2*u[i] + u[i-1]     # 看到 -2，就认出这是二阶导数模板</code></pre>
+  <p><strong>物理补给⑤（扩散）：</strong>二阶导度量的是<strong>凹凸程度</strong>：凸的地方往下塌、凹的地方被填——所以扩散永远从高往低、单向进行。<br>
+  $\nu$ 就是抹平的速率，在真实流体里它叫<strong>黏性</strong>。它给 0003 那种"一直陡下去"提供了刹车。</p>
+</div>
+
+
 <div class="win">
   <span class="box-title">✦ 本课收获</span>
   ① 学会二阶导数的中心差分格式（泰勒展开推导），并把它写进 FTCS 格式；<br>
@@ -27,6 +40,17 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   ③ 认识扩散格式的稳定因子 $\sigma_d = \frac{\nu\Delta t}{\Delta x^2}\le \frac12$（和 CFL 的 σ 是两回事，别混）。
 </div>
 
+
+<div class="box deepen">
+  <span class="box-title">◆ 物理补强｜本课会用到的流体力学基石</span>
+  又一种基本物理过程，和 0002 的对流并列：
+  <ul>
+    <li><strong>扩散 = 把尖锐的东西磨平</strong>：对流是"整体搬运、形状不变"，扩散是"从高往低流、形状被抹平"。二阶导 $\partial^2_x u$ 度量的是<strong>凹凸程度</strong>：凸起（二阶导为负）被削掉、凹槽被填平，最终趋于均匀。</li>
+    <li><strong>黏性 $\nu$（扩散系数）= 扩散的"强度"</strong>：$\nu$ 越大，抹平越快。在流体力学的 N-S 方程里 $\nu$ 就是运动黏度，它负责把动量"传开"，是真实流体不能无限陡的根本原因。</li>
+    <li><strong>分子紊乱的来源、不需要"力"参与</strong>：扩散的物理图像是微观粒子无规则热运动把高浓度往低浓度"蹭"过去——所以它永远是单向的（从高到低），也就是为什么方程会<strong>自发</strong>地把峰磨平，不需要任何驱动项。</li>
+  </ul>
+  与代码的关系：二阶导中心差分 $(u_{i+1}-2u_i+u_{i-1})/\Delta x^2$ 直接翻译"这段有多凸"。注意它没有方向性（对称），所以与对流的迎风取点是两种完全不同的差分模板。
+</div>
 <h2>1 · 从"搬运"转到"抹平"</h2>
 
 <p>前两步方程的物理是"把东西搬走"（对流）。扩散方程是另一种物理：</p>
@@ -187,7 +211,7 @@ Barba &amp; Forsyth, <em>CFD Python</em>, Step 3：本地 <code>code\cfdpython-r
     <span><a href="../reference/glossary.html">术语表</a></span>
     <span>下一课：0006 · Step 4 一维 Burgers + Sympy</span>
   </div>
-  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0005 课 · 2026-09-11</p>
+  <p>CFDPython 双轨课程 · 第 0005 课 · 2026-09-11</p>
 </footer>
 
 </div>

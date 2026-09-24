@@ -127,6 +127,9 @@ pre code {
   display: block;
   margin-bottom: 0.4rem;
 }
+/* 补给箱语义变体：取代曾散落各页的行内样式，改色只改这里 */
+.box.prep   { border-left-color: #2563eb; }   /* 课前补给：蓝 */
+.box.deepen { border-left-color: #d97706; }   /* 补强/深化：琥珀 */
 
 /* ---------- 今日战果 ---------- */
 .win {
@@ -219,6 +222,7 @@ footer.lesson-foot .nav {
   gap: 1rem;
   flex-wrap: wrap;
 }
+footer.lesson-foot p { margin-top: 0.8rem; }
 footer.lesson-foot a { color: var(--accent); text-decoration: none; }
 footer.lesson-foot a:hover { text-decoration: underline; }
 

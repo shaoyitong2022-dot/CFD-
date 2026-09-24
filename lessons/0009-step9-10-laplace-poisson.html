@@ -20,6 +20,19 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   <p class="meta">预计 50–60 分钟 ｜ 教材：<code>code\cfdpython-repo\lessons\12_Step_9.ipynb</code> 与 <code>13_Step_10.ipynb</code> ｜ <a href="0008-step7-8-2d-diffusion-burgers.html">← 前置 0008</a></p>
 </header>
 
+<div class="box prep">
+  <span class="box-title">◆ 课前补给 · 不演化的方程</span>
+  <p><strong>上一课你做到：</strong>二维的演化方程都会解了。→ <strong>这一课往前一步：</strong>换<strong>一类方程</strong>——不随时间演化，直接求终态。</p>
+  <p><strong>代码补给⑨（while 与收敛判据）：</strong></p>
+  <pre><code>while numpy.linalg.norm(u - un, 1) > tol:    # 迭代到"变化足够小"才停
+    un = u.copy()
+    ...</code></pre>
+  <p>演化方程用 <code>for n in range(nt)</code>（跑固定步数）；稳态问题用 <code>while</code>（跑到收敛）。<strong>这个区别就是抛物型与椭圆型的分野。</strong></p>
+  <p><strong>物理补给⑨（散度与稳态）：</strong>散度 $\nabla\cdot\vec u$ 度量<strong>净流出</strong>。稳态场不随时间变（$\partial_t=0$），Poisson 方程描述的就是"最终平衡成什么样"。<br>
+  <strong>这课的散度概念是 0010 的伏笔</strong>——下一课的不可压约束和它直接挂钩。</p>
+</div>
+
+
 <div class="win">
   <span class="box-title">✦ 本课收获</span>
   ① 见识"椭圆型"问题：没有时间演化，靠<strong>迭代到收敛</strong>求稳态场（与前面的"时间推进"是两种世界观）；<br>
@@ -27,6 +40,17 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   ③ 给 Laplace 加一个源项 → Poisson。<strong>这是 Step 11 压力泊松方程的直通预告</strong>。
 </div>
 
+
+<div class="box deepen">
+  <span class="box-title">◆ 物理补强｜本课会用到的流体力学基石</span>
+  本课转变世界观，补两个让"迭代稳态"说得通的物理项：
+  <ul>
+    <li><strong>三类偏微分方程的直觉区分</strong>：①双曲（002-0004 的对流）：信息沿特征线传播，装在边界上<strong>却靠初始条件</strong>；②抛物（0005-0008 的扩散）：信息向前"磨"；③椭圆（本课 Laplace）：<strong>没有时间、沟通全局</strong>，解只由所有边界决定。椭圆问题天然用迭代而非时间推进。</li>
+    <li><strong>散度 $\nabla\cdot$ 与"流进等于流出"</strong>：想要"流过一个闭合面流进的量等于流出的量"（无源、无漏），等价于 $\nabla\cdot\vec v=0$。Laplace 的势函数就是由一个"处处守恒、没有汇聚或发散"的场来描述的。</li>
+    <li><strong>势函数与偏瑞原理</strong>：满足 $\nabla^2 p=0$ 的 $p$ 在任意点取值等于周围均值——这就是迭代法"反复取邻居平均"所以会收敛到平衡的物理根源。</li>
+  </ul>
+  与代码的关系：本课迭代每步把每个格点更新为其四个邻居的平均（Laplace 的离散式），直到变化小于判据。这个"平均-更新-收敛"套路，就是 0010 腔流里<strong>压力泊松方程</strong>用来保证速度场无源的同一机器。
+</div>
 <h2>1 · 换个世界观：没有"时间"的方程</h2>
 
 <p>前面 8 步都是 $\partial_t u = \dots$（双曲/抛物，时间推进）。Laplace 方程没有时间：</p>
@@ -209,7 +233,7 @@ Barba &amp; Forsyth, <em>CFD Python</em>, Step 9（12）/ Step 10（13）。配�
     <span><a href="../reference/glossary.html">术语表</a></span>
     <span>下一课：0010 · Step 11+12 二维 NS 腔流/通道流</span>
   </div>
-  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0009 课 · 2026-09-11</p>
+  <p>CFDPython 双轨课程 · 第 0009 课 · 2026-09-11</p>
 </footer>
 
 </div>

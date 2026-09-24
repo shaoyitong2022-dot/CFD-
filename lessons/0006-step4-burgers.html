@@ -20,11 +20,63 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   <p class="meta">预计 60–75 分钟（本课略长，含 Sympy 新工具与周期边界）｜ 教材：<code>code\cfdpython-repo\lessons\05_Step_4.ipynb</code> ｜ <a href="0005-step3-diffusion.html">← 前置 0005</a> ｜ <a href="../reference/glossary.html">术语表</a></p>
 </header>
 
+<div class="box prep">
+  <span class="box-title">◆ 课前补给 · 让两种过程打架</span>
+  <p><strong>上一课你做到：</strong>认识了两种相反的过程——搬走与抹平。→ <strong>这一课往前一步：</strong>把它们放进<strong>同一个方程</strong>，看它们打架。</p>
+  <p><strong>代码补给⑥（SymPy 三件套，本课前半段最重）：</strong></p>
+  <pre><code>x, nu, t = sympy.symbols('x nu t')      # ① 造出"代数字母"
+phiprime = phi.diff(x)                   # ② 符号求导（自动链式法则）
+ufunc = lambdify((t, x, nu), u)          # ③ 把"式子"烤成"函数"
+u = numpy.asarray([ufunc(t, x0, nu) for x0 in x])   # 批量求值</code></pre>
+  <p><strong>⚠ 一个官方也踩的坑：</strong>后面出现 <code>t = 0</code>，从此 <code>t</code> 不再是符号（<code>lambdify</code> 按位置传参所以不报错）。想继续符号运算得另起名字如 <code>t_sym</code>。</p>
+  <p><strong>物理补给⑥（一对冤家）：</strong>对流造陡坡，扩散磨平它——Burgers 就是这两股力量的角力场。<br>
+  $\mathrm{Re}=\dfrac{\text{惯性}}{\text{黏性}}$ 正是这个比值的正式版本。<br>
+  <strong>★ 两个 σ 千万别混：</strong>对流 $\sigma_c=\dfrac{u\Delta t}{\Delta x}\le1$（一步跑几格），扩散 $\sigma_d=\dfrac{\nu\Delta t}{\Delta x^2}\le\dfrac12$（分母是<strong>平方</strong>）。分母不同，就是两种物理在量纲上的差别。</p>
+</div>
+
+
 <div class="win">
   <span class="box-title">✦ 本课收获</span>
   ① 亲手解决"一维主线"的终极方程 Burgers 方程（非线性对流 + 扩散合体）——课程主线中的 Burgers 主线 FDM 基准在此刻诞生；<br>
   ② 学会用 <strong>Sympy 做符号微分</strong>，再 <code>lambdify</code> 成可调用函数（科研里超常用的"推导交给机器"套路）；<br>
   ③ 搞懂<strong>周期边界条件</strong>：右端出去的量从左边回来，以及它如何让"头痛"的边界在代码里露出马脚。
+</div>
+
+
+<div class="box deepen">
+  <span class="box-title">◆ 物理补强｜本课会用到的流体力学基石</span>
+  Burgers 是理解真实流动的"最小模型"，补这一课核心的一条对立：
+  <ul>
+    <li><strong>一对基本矛盾：对流制造陡坡，扩散把它磨平</strong>：非线性对流（0003）把波形搓陡、要形成激波；扩散（0005）专治尖锐。二者同时存在，谁强谁弱决定解长什么样——这是几乎所有流动的母题。</li>
+    <li><strong>激波 vs 黏性后厚度</strong>：若没有扩散，非线性会让剖面无限变陡（走向间断的激波）。加上黏性 $\nu$ 后，陡坡被限制在某个有限宽度里，形成"黏性激波"——这也是为什么真实流动不会有无限零的密度梯度。</li>
+    <li><strong>雷诺数雏形（比值思想的登场）</strong>：对流项与扩散项谁的贡献大，用一个比值衡量 <strong>$\mathrm{Re}=\frac{\text{惯性(对流)}}{\text{黏性(扩散)}}$</strong>。Burgers 里局部比值用 $u/\nu$ 的量纲组合就能体现"对流相对扩散有多占优"——雷诺数家族的入门直觉，后面 N-S（0010）正式登场。</li>
+  </ul>
+  与代码的关系：本课把 0003 的对流模板 + 0005 的扩散模板直接相加，就是 Burgers 的离散式。改变 $\nu$ 你就会看到"陡峭锯齿"和"平滑波形"之间的切换——那就是对流/扩散谁占上风的最直观演示。
+</div>
+
+<h2>0 · 先别慌：难度集中在三件新事上</h2>
+
+<p>学到这里如果感觉"跨度突然变大"，这个反应是正常的——<strong>这是整个 A 轨里第一段真正的上坡</strong>。但把吓人的外衣剥掉会发现：<strong>方程本身你已经会了</strong>。</p>
+
+<p>更新公式无非是把 0003 的对流模板和 0005 的扩散模板<strong>直接相加</strong>：</p>
+
+$$
+u_i^{n+1}=u_i^n-u_i^n\frac{\Delta t}{\Delta x}(u_i^n-u_{i-1}^n)+\nu\frac{\Delta t}{\Delta x^2}(u_{i+1}^n-2u_i^n+u_{i-1}^n)
+$$
+
+<p>前两项（$u_i^n$ 减去那一坨）就是 0003 的对流项，最后带 $\nu$ 的一项就是 0005 的扩散项，一模一样。真正全新的其实只有三件事，<strong>建议一件一件按顺序攻克，不要并行</strong>：</p>
+
+<table>
+  <tr><th>新东西</th><th>属于哪一类</th><th>怎么拿下</th></tr>
+  <tr><td><strong>Sympy + lambdify</strong></td><td>新工具（把推导交给机器）</td><td>先当"高级计算器"用，不必懂它内部。只记住一座桥：符号推导 → 数值函数</td></tr>
+  <tr><td><strong>周期边界</strong></td><td>新写法（不是"跳过边界"，而是"补写边界"）</td><td>盯住 §3.3 那三行，先想清楚 un[-1]、un[-2] 各自代表谁</td></tr>
+  <tr><td><strong>解析解对照</strong></td><td>新方法（第一次有了标准答案）</td><td>这是好消息：从此验证不靠肉眼，靠误差</td></tr>
+</table>
+
+<div class="box">
+<span class="box-title">◆ 关于那一坨吓人的公式</span>
+§2 里那个 φ 初值看上去最吓人，但<strong>它不需要你当场推导</strong>——它是为了"让这道题有精确答案"而<strong>反向构造</strong>出来的，属于出题技巧，不是物理难点。§2 专门交代了它的来历。<br>
+看不懂那坨公式<strong>不影响把代码跑通</strong>。把力气优先花在上面这三件新事上，性价比最高。
 </div>
 
 <h2>1 · Burgers 是什么</h2>
@@ -59,6 +111,40 @@ u(x,t) = -\frac{2\nu}{\phi}\frac{\partial\phi}{\partial x} + 4
 $$
 
 <p>边界：<strong>周期边界</strong> $u(0)=u(2\pi)$——右端溢出的量绕回左端。这会引出全课最狡猾的坑（§4 揭晓）。</p>
+
+<h3>追根问底：这个 φ 到底是什么？（Cole–Hopf 变换）</h3>
+
+<p>看到那两个高斯函数的和，第一反应通常是"这初始条件哪来的"。答案是：<strong>它是倒着造出来的</strong>。</p>
+
+<p>Burgers 方程含 $u\,u_x$ 这一非线性项，绝大多数初始条件都求不出解析解。但 Cole 和 Hopf 发现了一个"作弊"式的替换——令</p>
+
+$$
+u = -2\nu\,\frac{\phi_x}{\phi}
+$$
+
+<p>把它代回 Burgers 方程，非线性项会被消掉，方程退化为</p>
+
+$$
+\frac{\partial\phi}{\partial t} = \nu\frac{\partial^2\phi}{\partial x^2}
+$$
+
+<p><strong>这正是 0005 学过的纯扩散方程。</strong>而扩散方程我们熟：随便丢一堆高斯包进去，它怎么演化都能写下来。</p>
+
+<p>于是流程被反过来走：</p>
+
+<ol>
+  <li>先随手挑一个 φ——这里选两个高斯包的和，因为它明显满足扩散方程；</li>
+  <li>再用 $u=-2\nu\phi_x/\phi$ 算出对应的 u，就得到一个<strong>精确满足 Burgers 方程的解</strong>；</li>
+  <li>取它在 t=0 时的样子作为初始条件；后面任意时刻的值，直接把 t 代进那个含 $(x-4t)$ 的 φ 表达式即可。</li>
+</ol>
+
+<p>换句话说：<strong>不是"先有初始条件，碰巧有解析解"，而是"先要造一个解析解，再倒推出初始条件"。</strong>那一坨高斯不是物理设计，是出题设计。</p>
+
+<div class="box">
+<span class="box-title">◆ 那个 +4 和 (x−4t) 里的 4 是同一件事</span>
+给 u 整体加常数 4，等价于换一个以速度 4 平移的参考系（Galilean 变换），波形整体向右漂移。看 φ 表达式里的 $(x-4t)$ 就明白了：波包中心以速度 4 右移。<br>
+所以这个解描述的是<strong>一个一边演化、一边整体平移的波形</strong>——这也是为什么后来会看到漂亮的锯齿在向右推进。
+</div>
 
 <h3>为什么要用 Sympy？</h3>
 <p>$\partial_x\phi$ 手算容易漏符号、漏系数（官方原话："it would be easy to drop a sign or forget a factor of x"）。Sympy 替你求导、渲染成 $\LaTeX$，再 <code>lambdify</code> 成数值函数——这是把"符号推导"和"数值计算"接起来的标准桥梁，将来推导复杂通量时极有用。</p>
@@ -116,6 +202,57 @@ u</code></pre>
 
 <p><code>numpy.asarray([ufunc(t, x0, nu) for x0 in x])</code>：列表推导逐个 x0 调数值函数，生成数组。这是"把符号解变成网格点数值"的惯用写法。</p>
 
+<h3>3.2 补 · <code>dt = dx * nu</code> 到底是什么来头</h3>
+
+<p>前面 0004、0005 一直教一套正统做法：<strong>先定稳定因子 σ，再反推 dt</strong>。结果这课突然冒出一句 <code>dt = dx * nu</code> 且不解释，很容易让人怀疑前面白学了。其实它一点也不神秘，把它代回 0004 的 Courant 数看看：</p>
+
+$$
+\sigma_c=\frac{u\,\Delta t}{\Delta x}=\frac{u\,(\Delta x\cdot\nu)}{\Delta x}=u\,\nu
+$$
+
+<p><strong>Δx 被约掉了。</strong>所以这个取法的真实含义是：让 Courant 数直接等于 $u\nu$，与网格无关。本课的 u 最大值约为 7（实测初始场落在 1.0～7.0 之间），ν=0.07，于是</p>
+
+$$
+\sigma_c \approx 7 \times 0.07 = 0.49
+$$
+
+<p>刚好压在 CFL 上限 1 以内。再看 0005 的扩散稳定因子：</p>
+
+$$
+\sigma_d=\frac{\nu\,\Delta t}{\Delta x^2}=\frac{\nu^2}{\Delta x}=\frac{0.07^2}{0.0628}\approx 0.078
+$$
+
+<p>离上限 0.5 很远。于是得出一个有用的结论：<strong>本课真正的紧约束是对流项（σ_c 用到了 0.49），扩散项非常宽松（σ_d 只有 0.078）。</strong>官方是在"两个条件都刚好满足"的前提下，挑了 ν=0.07 配 dt=dx·ν 这一组。</p>
+
+<div class="box">
+<span class="box-title">⚠ 但这个 dt 有隐患，值得自己跑一遍验证</span>
+注意 $\sigma_d=\nu^2/\Delta x$：<strong>分母是一次方的 Δx，所以网格越密它反而越大</strong>——这和直觉正好相反。保持 ν=0.07、dt=dx·ν 不变，只加密网格，实测结果如下：
+<table>
+  <tr><th>nx</th><th>Δx</th><th>σ_d</th><th>跑 100 步后</th></tr>
+  <tr><td>101</td><td>0.0628</td><td>0.078</td><td>稳定</td></tr>
+  <tr><td>201</td><td>0.0314</td><td>0.156</td><td>稳定</td></tr>
+  <tr><td>401</td><td>0.0157</td><td>0.312</td><td>稳定</td></tr>
+  <tr><td><strong>641</strong></td><td>0.0098</td><td><strong>0.499</strong></td><td><strong>失稳</strong>（刚好顶到上限）</td></tr>
+  <tr><td>801</td><td>0.0079</td><td>0.624</td><td>失稳（溢出成 inf）</td></tr>
+</table>
+结论很清楚：<code>dt = dx*nu</code> 只是<strong>这一组参数碰巧能跑</strong>，网格一加密就作废。而 0005 那套"先定 σ 再反推 dt"让 σ 不随网格变化，才是能扛住网格细化的做法。亲手验证见<strong>实验 4</strong>。
+</div>
+
+<h3>3.2 补 · 一个很容易踩的 Python 陷阱：t 被覆盖了</h3>
+
+<p>这段代码里 <code>t</code> 出现了两种截然不同的身份：</p>
+
+<pre><code>x, nu, t = sympy.symbols('x nu t')   # ① 这里的 t 是 Sympy 符号
+...
+t = 0                                 # ② 这里的 t 变成了普通整数 0
+u = numpy.asarray([ufunc(t, x0, nu) for x0 in x])</code></pre>
+
+<p>符号变量被普通数字覆盖了，为什么没报错？因为 <code>lambdify</code> 在那之前已经把表达式"烤"成了一个独立的数值函数，它接收参数只按<strong>位置</strong>对应 (t, x, nu)，压根不关心外面的 <code>t</code> 是谁。所以 ② 之后传给 ufunc 的就是数字 0。</p>
+
+<p>代价是：<strong>从这一行起 t 不再是符号了。</strong>此时若再写 <code>phi.diff(t)</code>，会报 'int' object has no attribute 之类的错。想在后面继续做符号运算，就得换个名字，例如 <code>t_sym = sympy.symbols('t')</code>。</p>
+
+<p>这是 Sympy 新手最常见的坑之一，<strong>官方 notebook 自己也这么写</strong>——能看懂它在干什么就算过关。</p>
+
 <h3>3.3 主循环：挑战在周期边界</h3>
 
 <pre><code>for n in range(nt):
@@ -159,6 +296,11 @@ pyplot.legend()</code></pre>
 
 <p><strong>实验 3（必做，挑战自己）</strong>：故意把内层循环写成 <code>range(0, nx)</code>，看 index error 还是悄悄错——先用"预测"再跑，理解"周期边界的代码为什么必须这样补"。</p>
 
+<p><strong>实验 4（强烈推荐，串起 0005）</strong>：保持其他参数不变，把 <code>nx</code> 依次改成 201、401、801，观察 σ_d = ν²/Δx 的变化，然后<strong>预测再验证</strong>：什么时候数值解开始出现高频振荡甚至爆掉？<br>
+这个实验会让你真切看到——<code>dt = dx*nu</code> 只在特定网格下成立，而 0005 教的"先定 σ 再反推 dt"才是能扛住网格加密的通用做法。</p>
+
+<p><strong>实验 5（检验对 §2 的理解）</strong>：把初始条件里的 <code>+4</code> 去掉（改成 <code>+0</code>），预测波形会变成什么样，再跑一遍验证。（提示：波形整体的平移速度会变成 0，你会看到它只在原地变陡、被抹平，不再向右推进。）</p>
+
 <h2>5 · 检查点：闭卷自测</h2>
 
 <details class="quiz"><summary>Q1 · 写出 Burgers 方程的更新公式（含对流项与扩散项）。</summary>
@@ -175,6 +317,15 @@ pyplot.legend()</code></pre>
 
 <details class="quiz"><summary>Q5（费曼）· 为什么把内层循环写成 range(0, nx) 会出错？</summary>
 <div class="a">因为更新公式要读 <code>un[i+1]</code>：i=nx-1 时下标越界。同时周期边界需要专门的 i=0/i-1 补写；把 range 写成 0..nx 既越界又没体现周期。边界是周期的事情，代码结构上要跟"内部点"分开处理。</div></details>
+
+<details class="quiz"><summary>Q6 · 本课那一坨看起来很怪的初始条件，是怎么来的？（讲清楚构造顺序）</summary>
+<div class="a">顺序是反的。先构造函数 φ（两个高斯包的和，它满足纯扩散方程），再用 Cole–Hopf 变换 $u=-2\nu\phi_x/\phi$ 算出对应的 u，这才得到一个精确满足 Burgers 方程的解；取 t=0 那一份作为初始条件。目的不是"设计一个漂亮初值"，而是<strong>让这道题存在能对照的精确解</strong>。</div></details>
+
+<details class="quiz"><summary>Q7 · 为什么本课可以写 dt = dx*nu？它的隐患是什么？</summary>
+<div class="a">因为代入后 Courant 数 $\sigma_c=u\,\Delta t/\Delta x=u\nu$，Δx 被约掉，与网格无关；ν=0.07、u_max≈7 时 σ_c≈0.49，压在 CFL 上限内。隐患在扩散侧：$\sigma_d=\nu^2/\Delta x$ 的分母是一次方的 Δx，网格越密反而越大——实测 nx=641 时 σ_d 就达到 0.499 顶格并开始溢出。所以它只在特定网格下碰巧成立，不如"先定 σ 再反推 dt"可靠。</div></details>
+
+<details class="quiz"><summary>Q8 · 这段代码里 <code>t</code> 为什么既是符号又可以是数字？</summary>
+<div class="a"><code>sympy.symbols</code> 造出的 t 是符号；后来 <code>t = 0</code> 把它覆盖成普通整数。没报错是因为 <code>lambdify</code> 早已把表达式转成独立数值函数，按位置而非名字接收参数。副作用是从此 t 不再是符号，<code>phi.diff(t)</code> 会报错；想继续符号运算要另起名字。</div></details>
 
 <h2>6 · 默写任务（必做）</h2>
 
@@ -197,7 +348,7 @@ Barba &amp; Forsyth, <em>CFD Python</em>, Step 4：本地 <code>code\cfdpython-r
     <span><a href="../reference/glossary.html">术语表</a></span>
     <span>下一课：0007 · Step 5-6 二维对流 + 向量化</span>
   </div>
-  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0006 课 · 2026-09-11</p>
+  <p>CFDPython 双轨课程 · 第 0006 课 · 2026-09-11</p>
 </footer>
 
 </div>

@@ -20,12 +20,36 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   <p class="meta">预计 30–40 分钟 ｜ 教材：<code>code\cfdpython-repo\lessons\02_Step_2.ipynb</code> ｜ <a href="0002-step1-linear-convection.html">← 先完成 0002</a> ｜ <a href="../reference/glossary.html">术语表</a></p>
 </header>
 
+<div class="box prep">
+  <span class="box-title">◆ 课前补给 · 搬运速度开始依赖自己</span>
+  <p><strong>上一课你做到：</strong>让场以固定速度整体平移。→ <strong>这一课往前一步：</strong>让<strong>搬运速度等于它自己</strong>。</p>
+  <p><strong>代码补给（复习 copy + 认识"非线性"长什么样）：</strong><code>un = u.copy()</code> 继续用，本节不再重复。<br>
+  新的看点是这个——波速不再是常数 c，而是 <code>un[i]</code> 本身：</p>
+  <pre><code>u[i] = un[i] - un[i] * dt/dx * (un[i] - un[i-1])
+#              ↑ 波速就是它自己 —— "非线性"在代码里的样子</code></pre>
+  <p>同一个 <code>un[i]</code> 在一行里出现两次，<strong>这就是非线性项 $u\,\partial_x u$ 的离散形态</strong>。认出它，你就认出了 CFD 里一切麻烦的源头。</p>
+  <p><strong>物理补给③（陡化与激波雏形）：</strong>波速等于自身 → 波峰比波谷跑得快 → 前缘不断变陡 → 趋向间断。<br>
+  只有对流、没有扩散时，它会<strong>一直陡下去</strong>，直到数学上出现间断（激波）。0005 会给它配一个刹车。</p>
+</div>
+
+
 <div class="win">
   <span class="box-title">✦ 本课收获</span>
   ① 看懂并写对一个改动：把 Step 1 的常数波速 $c$ 换成解自身 $u$——这是 CFD 里从"线到非线"的临门一脚；<br>
   ② 亲眼观察到帽子在非线性下"迎风坡变陡"——一个小小的初始不平滑，会被方程自己放大成冲击波雏形。
 </div>
 
+
+<div class="box deepen">
+  <span class="box-title">◆ 物理补强｜本课会用到的流体力学基石</span>
+  承接 0002，本课只多了这一个差别，但它掀翻一切：
+  <ul>
+    <li><strong>对流速度变成了"场本身"</strong>：0002 里波速是常量 $c$，所以整条特征线都是直斜线；本节波速 $u$ 随位置变化，且大的地方跑得快——于是<strong>追尾</strong>发生。</li>
+    <li><strong>非线性 → 波形陡化（wave steepening）</strong>：$u$ 峰值的传播速度快于低谷，后面的快件追前面的慢件，迎风坡被越挤越陡。形象地说：快追慢，会把剖面"搓"出一面越来越陡的墙。</li>
+    <li><strong>为什么"变陡"最后会失败、需要救场</strong>：无数解会发展出<strong>激波（shock）</strong>——那里场值在极短距离内跳变。数字上一条次连续线不可能表达跳跃，所以必须引入弥散/黏性把墙"磨圆"。这正是 Burgers（0006）里扩散项的角色。</li>
+  </ul>
+  与代码的关系：同一个迎风差分模板移植过来，但把 $c$ 换成了当地的 $u_i$。你会看到帽子迎风面变得比背面更陡，那就是陡化的直接证据；0006 给方程加黏性后，这条陡坡才有救。
+</div>
 <h2>1 · 这一课到底改了什么</h2>
 
 <p>上节课你解的是线性对流：波以恒定速度 $c$ 平移，形状不变。这节课方程变成：</p>
@@ -151,7 +175,7 @@ Barba &amp; Forsyth, <em>CFD Python</em>, Step 2：本地 <code>code\cfdpython-r
     <span><a href="../reference/glossary.html">术语表</a></span>
     <span>下一课：0004 · CFL 条件专章</span>
   </div>
-  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0003 课 · 2026-09-11</p>
+  <p>CFDPython 双轨课程 · 第 0003 课 · 2026-09-11</p>
 </footer>
 
 </div>

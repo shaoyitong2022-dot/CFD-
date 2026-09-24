@@ -20,6 +20,17 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   <p class="meta">预计 40–50 分钟 ｜ 教材：<code>code\cfdpython-repo\lessons\03_CFL_Condition.ipynb</code> ｜ 前置 0002、0003 ｜ <a href="../reference/glossary.html">术语表</a></p>
 </header>
 
+<div class="box prep">
+  <span class="box-title">◆ 课前补给 · 什么时候会崩</span>
+  <p><strong>上一课你做到：</strong>波速依赖自身，波形会自己变陡。→ <strong>这一课往前一步：</strong>退回来问一个更根本的问题——<strong>格式什么时候会崩</strong>。</p>
+  <p><strong>代码补给（把 dt 当旋钮）：</strong>改一个数字、重跑、看结果——这是 CFD 最朴素也最有力的研究手法。</p>
+  <pre><code>dt = sigma * dx     # 先定 σ，再反推 dt（不要凭感觉填 dt）</code></pre>
+  <p><strong>物理补给④（信息传播速度）：</strong><strong>CFL 不是数学咒语，是物理因果的直接后果。</strong><br>
+  真实世界里信息每步最多传 $\Delta x$；你的格式若让一步跨越好几格，等于要求"信息跑得比物理允许得更快"——自然界不答应，于是炸。<br>
+  $\sigma_c=\dfrac{u\Delta t}{\Delta x}\le 1$ 里的 1，就是"一步最多跑一格"。</p>
+</div>
+
+
 <div class="win">
   <span class="box-title">✦ 本课收获</span>
   ① 亲手触发一次"数值爆炸"，并理解它为什么发生——这是 CFD 学生必吃的一课；<br>
@@ -27,6 +38,17 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   ③ 学会把 $\Delta t$ "绑"在 $\Delta x$ 上（官方推荐的稳定写法），让代码不会因参数组合而炸。
 </div>
 
+
+<div class="box deepen">
+  <span class="box-title">◆ 物理补强｜本课会用到的流体力学基石</span>
+  本课不引入新物理量，但用到一个必须理解的"信息传播"直觉：
+  <ul>
+    <li><strong>信息传播有速度上限</strong>：真实流体里，物理影响（扰动）以有限速度扩散/传播，不能无限快。数值网格也要尊重这一点：一个时间步内，信息的"触角"最多传到相邻格点。</li>
+    <li><strong>Courant 数 $C=\frac{u\Delta t}{\Delta x}$ 是"每步信息走了几个格"</strong>：分子 $u\Delta t$ 是物理扰动在一个时间步里实际移动的距离，分母 $\Delta x$ 是格宽，商就是跨过的格子数。物理上它必须 $\le 1$，否则信息一个步长内就"跳格"，数值格式跟不上。</li>
+    <li><strong>它不是一个可以随意定的"参数"，而是一种匹配关系</strong>：真实问题给定 $u,\Delta x$ 后，稳定就约束你 $\Delta t \le \Delta x/u$。后面扩散还会给出另一个帽子：$\Delta t\le \Delta x^2/\nu$，两套判据别混（本课聚焦对流版）。</li>
+  </ul>
+  与代码的关系：0002 实验 2 把 <code>dt</code> 放大导致爆炸，就是 $C$ 越过 1。官方"把 $\Delta t=\sigma\Delta x/u$ 绑在 $\Delta x$ 上"的写法，就是让 $C=\sigma$ 固定在一个安全值。
+</div>
 <h2>1 · 先谈谈你已经悄悄踩过的坑</h2>
 
 <p>0002 实验 2 里，如果你把 <code>dt=0.025</code> 改大，可能已经看到数值解<strong>冒出锯齿、甚至输出 NaN</strong>。那不是 Bug，是格式的<strong>稳定性条件</strong>被突破了。这一课就是给它一个名字：<strong>CFL 条件</strong>（Courant–Friedrichs–Lewy，来自 1928 年那三位数学家的名字）。</p>
@@ -178,7 +200,7 @@ Barba &amp; Forsyth, <em>CFD Python</em>, CFL Condition：本地 <code>code\cfdp
     <span><a href="../reference/glossary.html">术语表</a></span>
     <span>下一课：0005 · Step 3 一维扩散</span>
   </div>
-  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0004 课 · 2026-09-11</p>
+  <p>CFDPython 双轨课程 · 第 0004 课 · 2026-09-11</p>
 </footer>
 
 </div>

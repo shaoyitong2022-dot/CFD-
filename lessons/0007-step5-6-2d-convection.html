@@ -20,6 +20,21 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   <p class="meta">预计 50–60 分钟 ｜ 教材：<code>code\cfdpython-repo\lessons\07_Step_5.ipynb</code> 与 <code>08_Step_6.ipynb</code> ｜ <a href="0006-step4-burgers.html">← 前置 0006</a></p>
 </header>
 
+<div class="box prep">
+  <span class="box-title">◆ 课前补给 · 升维</span>
+  <p><strong>上一课你做到：</strong>一维主线的方程已经能解了（Burgers）。→ <strong>这一课往前一步：</strong>把世界从<strong>一条线升成一个平面</strong>。</p>
+  <p><strong>代码补给⑦（meshgrid 与切片向量化，本课最重）：</strong></p>
+  <pre><code>X, Y = numpy.meshgrid(x, y)   # 两个一维 → 两张二维坐标网
+u[i, j]          # 第 i 行第 j 列；约定：i 对应 y，j 对应 x
+
+# 双层循环 → 一行切片
+u[1:-1, 1:-1] = un[1:-1,1:-1] - un[1:-1,1:-1]*dt/dx*(un[1:-1,1:-1]-un[:-2,1:-1])</code></pre>
+  <p><strong>切片写法的关键：</strong>把"邻居"也整体平移一格——<code>un[i-1,j]</code> 对应全体平移后的 <code>un[:-2, 1:-1]</code>。因为每个元素同时扮演"自己"和"别人的邻居"两个角色。</p>
+  <p><strong>物理补给⑦（二维速度场）：</strong>一维只有一个 u；二维是<strong>两个分量</strong>——u（x 方向）和 v（y 方向）。<br>
+  从这课开始要分清<strong>标量场</strong>（温度、压力，一个数）与<strong>向量场</strong>（速度，两个数）。</p>
+</div>
+
+
 <div class="win">
   <span class="box-title">✦ 本课收获</span>
   ① 掌握二维网格的关键约定：<code>u[j, i]</code>（j=y、i=x）与三维绘图 <code>meshgrid + plot_surface</code>；<br>
@@ -27,6 +42,17 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   ③ 对比两层 for 循环与<strong>数组运算（向量化）</strong>两种写法，为后面所有步奠定"少写循环"的习惯。
 </div>
 
+
+<div class="box deepen">
+  <span class="box-title">◆ 物理补强｜本课会用到的流体力学基石</span>
+  从一根线跳到一片场，补一个关键跃迁：
+  <ul>
+    <li><strong>二维速度场 = 两个互相垂直的分量</strong>：真实 2D 流动每一处有 $u$（x 方向）和 $v$（y 方向）两个速度。它们的组合 $\vec u=(u,v)$ 是一个<strong>矢量场</strong>，本课先把它们当两片独立的标量场各推各的。</li>
+    <li><strong>全导 vs 偏导</strong>：流体质点既被搬运又自身变化，其真正感受到的变化率是<strong>物质导数</strong> $\frac{D}{Dt}=\frac{\partial}{\partial t}+\vec u\cdot\nabla$（见 0010）。本课的对流方程其实就是 $\frac{D u}{Dt}=0$——"跟着流体质点走，$u$ 不变"。</li>
+    <li><strong>梯度指向变化最快的方向</strong>：$\nabla u=(\partial_x u,\partial_y u)$ 这个向量指出 $u$ 增大最快的方向。对流项 $u\partial_x u+v\partial_y u=\vec u\cdot\nabla u$ 正是"沿流动方向测 $u$ 的变化"。</li>
+  </ul>
+  与代码的关系：二维数组的下标约定 <code>u[j,i]</code>（第一次是 y、第二次是 x）直接对应"偏导在一个方向上一个方向地各算一次"。你写的 `u[j,i]-u[j,i-1]` 是对 $\partial_x u$ 的采样，另一项对 $\partial_y u$。
+</div>
 <h2>1 · 二维的约定（本节最容易踩坑的地方）</h2>
 
 <p>二维就多一个下标。约定（钉死它，后面全用）：</p>
@@ -231,7 +257,7 @@ Barba &amp; Forsyth, <em>CFD Python</em>, Step 5（07）/ Step 6（08）。配�
     <span><a href="../reference/glossary.html">术语表</a></span>
     <span>下一课：0008 · Step 7+8 二维扩散与 Burgers</span>
   </div>
-  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0007 课 · 2026-09-11</p>
+  <p>CFDPython 双轨课程 · 第 0007 课 · 2026-09-11</p>
 </footer>
 
 </div>

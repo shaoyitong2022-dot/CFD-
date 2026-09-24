@@ -20,6 +20,17 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   <p class="meta">预计 45 分钟（代码量小，重点是观察与调权）｜ 教材：官方 notebook 的 PINN 段整合 ｜ <a href="0013-b3-autograd-physics-loss.html">← 前置 B3</a></p>
 </header>
 
+<div class="box prep">
+  <span class="box-title">◆ 课前补给 · 两个损失怎么共存</span>
+  <p><strong>上一课你做到：</strong>网络会自己算二阶导、能写出物理损失了。→ <strong>这一课往前一步：</strong>把两个损失<strong>合起来训练</strong>。</p>
+  <p><strong>代码补给⑬（多目标损失）：</strong></p>
+  <pre><code>loss = data_loss + 1e-4 * physics_loss</code></pre>
+  <p>那个 <code>1e-4</code> 是玄学：太小，物理不起作用；太大，数据拟合崩坏。<strong>调它就是在调停两个目标</strong>。</p>
+  <p><strong>物理补给（多目标平衡）：</strong>数据损失管"拟合观测"，物理损失管"满足定律"。<strong>两者会打架</strong>——这是 PINN 最本质的困难，不是调参技巧问题。<br>
+  理解这一点，比记住某个好用的权重数值重要得多。</p>
+</div>
+
+
 <div class="win">
   <span class="box-title">✦ 本课收获</span>
   ① 把 B2 的裸 NN 骨架 + B3 的物理损失拼成完整 PINN，并跑出"外推成功"的图；<br>
@@ -27,6 +38,17 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   ③ 为 B5 的三线对比备好"PINN 解"，同一振子的三个解即将同框。
 </div>
 
+
+<div class="box deepen">
+  <span class="box-title">◆ 物理补强｜本课会用到的基石（多目标优化直觉补充）</span>
+  PINN 合体课，补一条理解"为什么 1e-4"的关键直觉：
+  <ul>
+    <li><strong>多目标 = 两条损失在拔河</strong>：loss 是 data + physics 两项之和，训练要同时让它们都小。若物理项权重给得太小，它无力约束网络（退回裸 NN）；给得太大，物理项压过数据、牺牲拟合真实观测。权重 <code>1e-4</code> 就是为在这两者间取得平衡而选的。</li>
+    <li><strong>量级匹配是关键</strong>：物理残差往往比数据误差的数值大几个量级，直接相加会把数据项淹没。把物理项乘一个很小的系数，本质是"把两类损失的尺度对齐"再相加。</li>
+    <li><strong>"调和两条证据"比"单独用哪条都强"</strong>：数据点 +100% 到处都能采样时数据就够；数据只有 10 点（小段）时，物理约束补上区间外的信息——联合起来外推成功。这是 PINN 的价值所在。</li>
+  </ul>
+  与代码的关系：合体后的循环就是 B2 骨架 + B3 物理损失，唯一要动手调的是物理权重 <code>1e-4</code>。把它改成 1 或 1e-1，你会亲眼看到"拟合数据" vs "满足方程"之争的输赢变化——那就是"平衡玄学"的直观演示。
+</div>
 <h2>1 · 合体：代码其实就是 B2 + B3</h2>
 
 <p>你已经有全部零件。PINN 的完整训练循环 = B2 的训练骨架 + B3 的物理损失，再无新语法。逐行过一遍关键差异（相对 B2）：</p>
@@ -136,7 +158,7 @@ Moseley <code>harm-osc PINN.ipynb</code>（PINN 小节）；配套博客插图 F
     <span><a href="../reference/glossary.html">术语表</a></span>
     <span>下一课：0015 · B5 三线对比（收官）</span>
   </div>
-  <p style="margin-top:0.8rem">CFDPython 双轨课程 · 第 0014 课 · 2026-09-11</p>
+  <p>CFDPython 双轨课程 · 第 0014 课 · 2026-09-11</p>
 </footer>
 
 </div>
