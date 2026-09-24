@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>渐进学习路程 · CFDPython 双轨</title>
+<style>
+/* CFDPython 双轨课程共享样式表 —— 所有课页与参考页统一引用 */
+:root {
+  --ink: #1f2328;
+  --paper: #fffdf7;
+  --soft: #f6f4ec;
+  --accent: #0f6b6b;        /* 主强调：深青 */
+  --accent-2: #b3541e;      /* 次强调：赭橙 */
+  --line: #d8d2c2;
+  --code-bg: #f4f2ea;
+  --muted: #6e6a5e;
+  --serif: "Source Han Serif SC", "Noto Serif SC", "Songti SC", Georgia, serif;
+  --sans: "Source Han Sans SC", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --mono: "Cascadia Code", Consolas, "JetBrains Mono", monospace;
+}
+
+* { box-sizing: border-box; }
+
+html { font-size: 17px; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  line-height: 1.85;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 5rem;
+}
+
+/* ---------- 头部 ---------- */
+header.lesson-head {
+  border-bottom: 3px double var(--line);
+  padding-bottom: 1.2rem;
+  margin-bottom: 2.2rem;
+}
+.kicker {
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin: 0 0 0.5rem;
+}
+h1 {
+  font-size: 1.9rem;
+  line-height: 1.3;
+  margin: 0 0 0.6rem;
+  font-weight: 700;
+}
+.meta {
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.meta a { color: var(--accent); text-decoration: none; }
+.meta a:hover { text-decoration: underline; }
+
+/* ---------- 正文 ---------- */
+h2 {
+  font-size: 1.28rem;
+  margin: 2.6rem 0 0.9rem;
+  padding-left: 0.65rem;
+  border-left: 4px solid var(--accent);
+}
+h3 { font-size: 1.05rem; margin: 1.8rem 0 0.6rem; }
+
+p { margin: 0.9rem 0; }
+
+a { color: var(--accent); }
+a:hover { color: var(--accent-2); }
+
+strong { font-weight: 700; }
+
+/* ---------- 代码 ---------- */
+code {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  background: var(--code-bg);
+  padding: 0.12em 0.4em;
+  border-radius: 3px;
+  border: 1px solid var(--line);
+}
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 4px;
+  padding: 1rem 1.2rem;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.86rem;
+}
+.cm { color: #8a8577; font-style: italic; }      /* 代码注释色（教学用内联高亮） */
+
+/* ---------- 提示框 ---------- */
+.box {
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--accent-2);
+  background: var(--soft);
+  padding: 1rem 1.3rem;
+  margin: 1.6rem 0;
+  border-radius: 0 4px 4px 0;
+}
+.box .box-title {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  color: var(--accent-2);
+  display: block;
+  margin-bottom: 0.4rem;
+}
+/* 补给箱语义变体：取代曾散落各页的行内样式，改色只改这里 */
+.box.prep   { border-left-color: #2563eb; }   /* 课前补给：蓝 */
+.box.deepen { border-left-color: #d97706; }   /* 补强/深化：琥珀 */
+
+/* ---------- 今日战果 ---------- */
+.win {
+  border: 2px solid var(--accent);
+  border-radius: 6px;
+  padding: 1.1rem 1.4rem;
+  margin: 1.8rem 0;
+  background: #f0f7f5;
+}
+.win .box-title { color: var(--accent); }
+
+/* ---------- 小测（检索练习） ---------- */
+details.quiz {
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: #fff;
+  margin: 1rem 0;
+  padding: 0;
+}
+details.quiz summary {
+  cursor: pointer;
+  font-family: var(--sans);
+  font-weight: 600;
+  padding: 0.8rem 1.1rem;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+details.quiz summary::before {
+  content: "▸";
+  color: var(--accent);
+  transition: transform 0.15s;
+}
+details.quiz[open] summary::before { transform: rotate(90deg); }
+details.quiz .a {
+  padding: 0.3rem 1.4rem 1rem;
+  border-top: 1px dashed var(--line);
+  color: #33413b;
+}
+details.quiz .a::before {
+  content: "答案";
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  color: var(--accent);
+  display: block;
+  margin-top: 0.6rem;
+}
+
+/* ---------- 术语表 ---------- */
+dl.gloss dt {
+  font-family: var(--sans);
+  font-weight: 700;
+  color: var(--accent);
+  margin-top: 1.1rem;
+}
+dl.gloss dt .en { font-weight: 400; color: var(--muted); font-size: 0.85em; }
+dl.gloss dd { margin: 0.2rem 0 0 0; }
+
+/* ---------- 表格 ---------- */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.4rem 0;
+  font-family: var(--sans);
+  font-size: 0.88rem;
+}
+th, td {
+  border: 1px solid var(--line);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+th { background: var(--soft); }
+tr:nth-child(even) td { background: #fbfaf4; }
+
+/* ---------- 页脚导航 ---------- */
+footer.lesson-foot {
+  margin-top: 3.5rem;
+  padding-top: 1.2rem;
+  border-top: 3px double var(--line);
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+footer.lesson-foot .nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+footer.lesson-foot p { margin-top: 0.8rem; }
+footer.lesson-foot a { color: var(--accent); text-decoration: none; }
+footer.lesson-foot a:hover { text-decoration: underline; }
+
+/* ---------- 平板 / 小屏适配 ---------- */
+@media (max-width: 820px) {
+  html { font-size: 16px; }
+  .page { padding: 1.5rem 1rem 3rem; }
+  h1 { font-size: 1.55rem; }
+  h2 { font-size: 1.15rem; }
+  pre {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    padding: 0.85rem 1rem;
+    -webkit-overflow-scrolling: touch;
+    overflow-x: auto;
+  }
+  code { word-break: break-word; }
+  /* 代码行内注释在窄屏不自动换行断在奇怪位置 */
+  pre code { white-space: pre; }
+  table { font-size: 0.8rem; }
+  th, td { padding: 0.4rem 0.5rem; }
+  .box, .win { padding: 0.9rem 1.1rem; }
+  footer.lesson-foot .nav { flex-direction: column; gap: 0.4rem; }
+}
+
+/* ---------- 打印 ---------- */
+@media print {
+  body { background: #fff; font-size: 11pt; }
+  .page { max-width: none; padding: 0; }
+  details.quiz { border: 1px solid #999; }
+  details.quiz .a { display: block !important; }
+  pre { background: #fff; }
+}
+
+</style>
+<script>
+MathJax = { tex: { inlineMath: [['$', '$']] } };
+</script>
+<script src="../assets/mathjax/es5/tex-mml-chtml.js" defer>
+</script>
+</head>
+<body>
+<div class="page">
+
+<header class="lesson-head">
+  <p class="kicker">参考文档 · 路线图</p>
+  <h1>渐进学习路程</h1>
+  <p class="meta">一条主线 + 两条补给线：在每个时刻，你最该懂的东西是什么 ｜ <a href="../index.html">← 课程索引</a> ｜ <a href="python-toolkit.html">Python 工具箱</a> ｜ <a href="fluid-intuition.html">流体直觉</a></p>
+</header>
+
+<div class="win">
+  <span class="box-title">✦ 这份路线图在解决什么</span>
+  资源清单是<strong>并列</strong>的，学习是<strong>线性</strong>的——两者天生不对付。这份文档把一切都排成一条线。<br>
+  <strong>补给已经内联进每一课的开头了</strong>：翻到任意一课，开场那个「◆ 课前补给」块就是它在链条上的位置、需要的新写法与新概念——<strong>不用再跳出去查</strong>。本页是<strong>总览</strong>：用来看清"我现在走到哪""整条线长什么样"，以及需要纵深时该去翻哪本书。
+</div>
+
+<h2>怎么用</h2>
+
+<ol>
+  <li>从上往下走，<strong>不要跳</strong>。每条 Stage 里的「补给」先花 20–30 分钟看完，再进主课。</li>
+  <li>「你会卡在哪」是<strong>预告</strong>，不是威胁——提前知道坑在哪，比掉进去再爬出来省时间。</li>
+  <li>「过关标准」是<strong>可验证</strong>的。答不出来就别硬往前推进；但也别死磕——回落到上一 Stage 重复一轮通常更省事。</li>
+</ol>
+
+<div class="box deepen">
+<span class="box-title">◆ 两条补给线的脾性完全不同，别用同一种读法</span>
+<strong>Python 补给 = 字典</strong>：不要通读教材。遇到看不懂的写法 → 先查 <a href="python-toolkit.html">Python 工具箱</a> → 还不通才去外部资源查那一节。它是按需检索，不是线性阅读。<br>
+<strong>流体补给 = 慢炖</strong>：反过来，它<strong>建议线性推进</strong>。物理图像是「存储强度」型知识，临时抱佛脚补不出来——这也是为什么它比代码补给更需要提前一个月开始泡。整个文档里只有 <strong>David Tong 讲义</strong>建议系统性阅读（每周一小节，与 Stage 1→4 并行）。
+</div>
+
+<h2>Stage 0 · 出发前（半天）</h2>
+
+<table>
+  <tr><th>对应主线</th><td>0001 · 环境点火与 NumPy</td></tr>
+  <tr><th>你会卡在哪</th><td>环境本身。Jupyter 起不来、解释器选错、%matplotlib inline 报错。</td></tr>
+  <tr><th>补给</th><td>无。本阶段不需要任何额外知识。</td></tr>
+  <tr><th>过关标准</th><td>能在 Jupyter 里 import numpy，画出一条 sin 曲线并保存出来。</td></tr>
+</table>
+
+<h2>Stage 1 · 对流与稳定性的第一次交手</h2>
+
+<table>
+  <tr><th>对应主线</th><td>0002–0004 · 线性对流 / 非线性对流 / CFL 专章</td></tr>
+  <tr><th>你会卡在哪</th><td>为什么 <code>un = u.copy()</code> 不能省（省了不报错，只是悄悄错）；为什么 dt 调大就炸。</td></tr>
+  <tr><th>代码补给</th><td><a href="python-toolkit.html">工具箱</a> §1 数组创建、<strong>§2 copy()（最重要，逐字读完）</strong>、§3 负索引</td></tr>
+  <tr><th>流体补给</th><td><a href="fluid-intuition.html">流体直觉</a> §1 场、§2 对流＝搬运、§3 特征线与信息传播</td></tr>
+  <tr><th>一手资源</th><td>SciPy Lectures <a href="https://scipy-lectures.org/intro/numpy/index.html">§1.4 NumPy</a>——<strong>只看数组创建与索引这两部分</strong>，约 20 分钟</td></tr>
+  <tr><th>过关标准</th><td>能手算 Courant 数；能向别人解释「不写 copy() 为什么结果会静默变错」。</td></tr>
+</table>
+
+<h2>Stage 2 · 二阶导与 Burgers</h2>
+
+<table>
+  <tr><th>对应主线</th><td>0005–0006 · 扩散 / Burgers 方程</td></tr>
+  <tr><th>你会卡在哪</th><td>SymPy 到底是干嘛的；那一坨初始条件从哪来的；<code>dt = dx*nu</code> 凭什么能用。（这三个坑 0006 已补详解）</td></tr>
+  <tr><th>代码补给</th><td><a href="python-toolkit.html">工具箱</a> §5 列表推导+asarray、§6 SymPy 三件套、§7 Matplotlib 最小集</td></tr>
+  <tr><th>流体补给</th><td><a href="fluid-intuition.html">流体直觉</a> §4 对流 vs 扩散的对立、§5 黏性与雷诺数</td></tr>
+  <tr><th>一手资源</th><td>SciPy Lectures <a href="https://scipy-lectures.org/intro/numpy/index.html">§1.4.1.6 Copies and views</a>——解决 Stage 1 没吃透的引用语义</td></tr>
+  <tr><th>过关标准</th><td>跑出「数值 vs 解析」两线重合的对照图；能说出 Burgers 的「锯齿」现象是谁制造的、谁在压制它。</td></tr>
+</table>
+
+<h2>Stage 3 · 升维：从一维到二维</h2>
+
+<table>
+  <tr><th>对应主线</th><td>0007–0008 · 二维对流 / 二维扩散与 Burgers</td></tr>
+  <tr><th>你会卡在哪</th><td>代码突然从双层 for 循环变成一行切片赋值，认不出来这是同一个东西。ijk 索引约定绕人。</td></tr>
+  <tr><th>代码补给</th><td><a href="python-toolkit.html">工具箱</a> <strong>§4 向量化（本 Stage 的重头戏）</strong>；broadcasting 概念查 SciPy Lectures 同章</td></tr>
+  <tr><th>流体补给</th><td><a href="fluid-intuition.html">流体直觉</a> §2 二维速度场与 u,v 两个分量、§4 扩散的各向同性</td></tr>
+  <tr><th>过关标准</th><td>能把一段逐点循环改写为切片写法，并说清「邻居的数组为什么整体平移一格」。</td></tr>
+</table>
+
+<h2>Stage 4 · 椭圆方程与 N-S（流体直觉的总验收）</h2>
+
+<table>
+  <tr><th>对应主线</th><td>0009–0010 · Laplace/Poisson / 二维 N-S 腔流通道流</td></tr>
+  <tr><th>你会卡在哪</th><td><strong>压力泊松方程是凭空冒出来的</strong>——这是整个 A 轨最大的认知断层点，前面 8 课都没铺垫。</td></tr>
+  <tr><th>代码补给</th><td>重温 <a href="python-toolkit.html">工具箱</a> §2 copy()；把求解器封装成函数（迈向 solver.py）</td></tr>
+  <tr><th>流体补给</th><td><a href="fluid-intuition.html">流体直觉</a> <strong>§6 散度与不可压、§7 物质导数、§8 压力泊松与投影法</strong>——本 Stage 全靠它</td></tr>
+  <tr><th>一手资源</th><td><strong>David Tong 讲义</strong>（此时读到第 3 章）：§1.1.2 物质导数、§3.1 应力与黏性、§3.3 量纲分析与雷诺数、§3.5 边界层</td></tr>
+  <tr><th>过关标准</th><td>能解释「为什么不可压流必须先解一个 Poisson 方程才能得到下一步的速度」。</td></tr>
+</table>
+
+<div class="box">
+<span class="box-title">⚠ Stage 4 是整条路的瓶颈，建议提前一个月开 Tong</span>
+Stage 1–3 的流体概念都是可以在课上「顺手理解」的。<strong>但 Stage 4 不行</strong>——散度、投影算子的思想需要一个沉淀期。<br>
+建议：走到 Stage 1 时就开始每周读 Tong 一小节。到 Stage 4 时你已经泡了四周，那一刻它会由难变易懂。这也是本路线图里唯一希望你「提前」开始的东西。
+</div>
+
+<h2>Stage 5 · B 轨：把物理塞进神经网络</h2>
+
+<table>
+  <tr><th>对应主线</th><td>0011–0015 · PINN 概念 → autograd → PINN 合体 → 三线对比</td></tr>
+  <tr><th>你会卡在哪</th><td><code>create_graph=True</code> 到底在干什么；数据损失和物理损失怎么互相打架。</td></tr>
+  <tr><th>代码补给</th><td>此时 Python 底子已经够用，只需 torch 的 <code>torch.autograd</code>（讲义内含）</td></tr>
+  <tr><th>流体补给</th><td><strong>没有新概念。</strong>谐振子是力学不是流体——这正是 B 轨放在最后的原因</td></tr>
+  <tr><th>过关标准</th><td>跑出 0015 的「解析 vs FDM vs PINN」三线对比图（这是组会汇报素材）。</td></tr>
+</table>
+
+<h2>两条补给线的对照</h2>
+
+<table>
+  <tr><th></th><th>Python 代码见识</th><th>流体力学直觉</th></tr>
+  <tr><td>性质</td><td>工具性知识，随查随用</td><td>图像性知识，需要沉淀</td></tr>
+  <tr><td>读法</td><td><strong>字典式</strong>：遇到问题才查</td><td><strong>线性式</strong>：每周推进一小节</td></tr>
+  <tr><td>见效</td><td>查完立刻能用</td><td>要几周后才「突然看懂」</td></tr>
+  <tr><td>主资源</td><td><a href="python-toolkit.html">本地工具箱</a> + SciPy Lectures</td><td><a href="fluid-intuition.html">本地直觉件</a> + David Tong 讲义</td></tr>
+  <tr><td>系统读物</td><td>Kong/Siauw/Bayen《Python Programming and Numerical Methods》（有中文版）——<strong>有余力才通读</strong></td><td>Tong → Acheson（读不顺时的平行解释）</td></tr>
+</table>
+
+<div class="box">
+<span class="box-title">◆ 给未来的提示</span>
+这条路线专为「数理底子扎实、但编程与流体力学尚未系统训练」的物理系学生设计。<strong>如果某一课突然读不动，先查这两条补给线是不是缺位了</strong>——那往往比"练习不够"更接近真相。
+</div>
+
+<footer class="lesson-foot">
+  <div class="nav">
+    <span><a href="../index.html">← 课程索引</a></span>
+    <span><a href="python-toolkit.html">Python 工具箱</a></span>
+    <span><a href="fluid-intuition.html">流体直觉</a></span>
+  </div>
+  <p>CFDPython 双轨课程 · 渐进路线图 · 2026-09-18</p>
+</footer>
+
+</div>
+</body>
+</html>

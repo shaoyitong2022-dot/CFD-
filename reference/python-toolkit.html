@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python 数值工具箱 · CFD 代码惯用法速查</title>
+<link rel="stylesheet" href="../assets/course.css">
+<script>
+MathJax = { tex: { inlineMath: [['$', '$']] } };
+</script>
+<script src="../assets/mathjax/es5/tex-mml-chtml.js" defer>
+</script>
+</head>
+<body>
+<div class="page">
+
+<header class="lesson-head">
+  <p class="kicker">参考文档 · 横向工具</p>
+  <h1>Python 数值工具箱</h1>
+  <p class="meta">CFD 代码里反复出现、却很少被解释的那些写法 ｜ 不占课时，遇到就回来查 ｜ <a href="../index.html">← 课程索引</a> ｜ <a href="glossary.html">术语表</a></p>
+</header>
+
+<div class="win">
+  <span class="box-title">✦ 这份文档解决什么</span>
+  它不是 Python 入门教程。<strong>只收录本课程代码里反复出现、但讲义默认你已经会了的写法。</strong><br>
+  如果你看懂了方程却读不懂代码，或读懂了却写不出来——大半原因在这份文档里。通读一遍约 20 分钟，之后当字典用。
+</div>
+
+<h2>1 · 数组创建：zeros / ones / empty / linspace</h2>
+
+<table>
+  <tr><th>写法</th><th>干什么</th><th>什么时候用</th></tr>
+  <tr><td><code>numpy.zeros(n)</code></td><td>长度 n、全 0</td><td>要累加、有默认值的安全起点</td></tr>
+  <tr><td><code>numpy.ones(n)</code></td><td>长度 n、全 1</td><td>均匀背景场（0005 的帽子就是在一片 1 上放一段 2）</td></tr>
+  <tr><td><code>numpy.empty(n)</code></td><td>长度 n、<strong>内容未定义</strong></td><td>马上要被完全覆盖时（省掉一次清零）</td></tr>
+  <tr><td><code>numpy.linspace(a,b,n)</code></td><td>a→b 之间均匀取 n 个点</td><td>生成空间坐标 <code>x</code></td></tr>
+</table>
+
+<div class="box">
+<span class="box-title">◆ empty 的坑（0006 里出现过）</span>
+<code>numpy.empty(nx)</code> <strong>不清零</strong>，它拿到的可能是上一块内存里的垃圾值。课上敢这么写，是因为紧接着 <code>un = u.copy()</code> 会把每个元素都覆盖掉。<br>
+<strong>判据：empty 出来的数组，每个位置你确定都要写——才用它。否则用 zeros。</strong>
+</div>
+
+<h2>2 · <code>copy()</code>：本门课最容易犯的静默错误</h2>
+
+<pre><code>un = u            # ✗ 危险：un 只是 u 的另一个名字
+un = u.copy()     # ✓ 正确：真正的副本</code></pre>
+
+<p>NumPy 的赋值是「贴标签」，不是「复制箱子」。两个名字指向同一块内存，改其中一个，另一个跟着变。</p>
+
+<p><strong>为什么时间推进必须要 <code>copy()</code>：</strong>更新公式右边用的全是<strong>上一时刻</strong>的值 $u^n$，左边写的是新值 $u^{n+1}$。如果 un 和 u 是同一个数组，你更新到一半，右边读到的就已经是被污染的新值了。</p>
+
+<div class="box">
+<span class="box-title">⚠ 这个错误不报错</span>
+它不会抛异常，只会让结果悄悄地错——图画出来往往还"看着挺像回事"。所以每写一层 for 循环，都先问自己一句：<strong>这一行右边，需要的是上一时刻的值吗？</strong>是，就必须 copy。
+</div>
+
+<h2>3 · 负索引与切片</h2>
+
+<table>
+  <tr><th>写法</th><th>含义</th><th>本课出现在哪</th></tr>
+  <tr><td><code>u[-1]</code></td><td>最后一个元素</td><td>0006 周期边界：<code>u[-1] = u[0]</code></td></tr>
+  <tr><td><code>u[-2]</code></td><td>倒数第二个</td><td>0006：周期世界里 i=0 真正的左邻居</td></tr>
+  <tr><td><code>u[1:-1]</code></td><td>去掉两端，取中间</td><td>0007 起替代内层循环的向量化写法</td></tr>
+  <tr><td><code>u[:-2]</code></td><td>从第 0 个到倒数第三个</td><td>切片更新里的"左邻居整体"</td></tr>
+</table>
+
+<h2>4 · 向量化：从双层循环到一行切片</h2>
+
+<p>下面两段代码<strong>完全等价</strong>，左边是 A 轨前半段（0002–0006）的写法，右边是 0007 之后的写法：</p>
+
+<pre><code># 逐点循环（更好懂）
+for i in range(1, nx-1):
+    u[i] = un[i] - un[i]*dt/dx*(un[i]-un[i-1])
+
+# 切片整体运算（更短、更快）
+u[1:-1] = un[1:-1] - un[1:-1]*dt/dx*(un[1:-1]-un[:-2])</code></pre>
+
+<p>切片写法的关键：<strong>把"每个点的邻居"也整体平移一格</strong>——<code>un[i-1]</code> 对应全体平移后的 <code>un[:-2]</code>。这是因为数组的每个元素同时扮演"自己"和"别人的邻居"两个角色。</p>
+
+<h2>5 · 列表推导 + asarray：符号 → 数值的最后一公里</h2>
+
+<pre><code>u = numpy.asarray([ufunc(t, x0, nu) for x0 in x])</code></pre>
+
+<p>读法：对 <code>x</code> 里的每个 <code>x0</code>，算出对应的 <code>ufunc(...)</code>，收集成 Python 列表，再用 <code>asarray</code> 变成 NumPy 数组。<br>
+这是把「一个含 t/x/ν 的数学函数」铺到网格点上的标准做法（0006 生成初始场和解析解都在用）。</p>
+
+<h2>6 · SymPy 三件套</h2>
+
+<table>
+  <tr><th>写法</th><th>干什么</th></tr>
+  <tr><td><code>sympy.symbols('x nu t')</code></td><td>声明符号变量（此后它们是"代数字母"，不是数字）</td></tr>
+  <tr><td><code>expr.diff(x)</code></td><td>对 x 符号求导，自动链式法则</td></tr>
+  <tr><td><code>lambdify((t,x,nu), expr)</code></td><td>把符号表达式编译成可调用的数值函数</td></tr>
+</table>
+
+<div class="box">
+<span class="box-title">⚠ 变量覆盖陷阱（官方代码也这么写，但你要看懂）</span>
+<pre><code>x, nu, t = sympy.symbols('x nu t')   # t 是符号
+t = 0                                 # ← t 变成普通整数 0</code></pre>
+之所以不报错：<code>lambdify</code> 早已把表达式"烤"成独立函数，它按<strong>位置</strong>而非名字接收参数。<br>
+代价：<strong>此后 t 不再是符号</strong>，<code>phi.diff(t)</code> 会报错。要继续符号运算就另起名字，如 <code>t_sym</code>。
+</div>
+
+<h2>7 · Matplotlib 最小可用集</h2>
+
+<pre><code>pyplot.figure(figsize=(11, 7))   # 画布
+pyplot.plot(x, u, marker='o', lw=2, label='数值')  # 画线
+pyplot.xlim([0, 2]); pyplot.ylim([0, 10])          # 坐标范围
+pyplot.legend()                                     # 显示图例
+pyplot.subplot(1, 2, 1)          # 子图：1行2列第1个
+
+# 三维（新版 API，务必用这个）
+ax = fig.add_subplot(projection='3d')</code></pre>
+
+<p>旧写法 <code>fig.gca(projection='3d')</code> 在 matplotlib 3.10 已废弃，会报 TypeError。官方 2013 年的 notebook 里还有这种写法，遇到直接换成上面的。</p>
+
+<h2>8 · <code>%matplotlib inline</code> 是什么</h2>
+
+<p>它是 Jupyter 的<strong>魔法命令</strong>（不是 Python 语法），让图画在单元格下方直接显示。放在 import 区即可。在 PyCharm 的 <code>.py</code> 文件里不需要也不能写。</p>
+
+<h2>9 · 报错速查</h2>
+
+<table>
+  <tr><th>报错</th><th>通常原因</th></tr>
+  <tr><td><code>IndexError: index out of bounds</code></td><td>循环写成了 <code>range(1, nx)</code>，末尾读了 <code>un[nx]</code></td></tr>
+  <tr><td><code>ValueError: operands could not be broadcast</code></td><td>两个数组形状对不上（比如 <code>u[1:-1]</code> 和 <code>un[:-1]</code> 长度不同）</td></tr>
+  <tr><td><code>'int' object has no attribute 'diff'</code></td><td>符号变量被数字覆盖了（见第 6 节）</td></tr>
+  <tr><td>结果不对但不报错</td><td>多半是漏了 <code>copy()</code>（见第 2 节）</td></tr>
+</table>
+
+<footer class="lesson-foot">
+  <div class="nav">
+    <span><a href="../index.html">← 课程索引</a></span>
+    <span><a href="glossary.html">术语表</a></span>
+    <span><a href="fluid-intuition.html">流体直觉 →</a></span>
+  </div>
+  <p>CFDPython 双轨课程 · 参考文档 · 2026-09-18</p>
+</footer>
+
+</div>
+</body>
+</html>
