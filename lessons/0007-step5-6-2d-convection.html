@@ -25,11 +25,11 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   <p><strong>上一课你做到：</strong>一维主线的方程已经能解了（Burgers）。→ <strong>这一课往前一步：</strong>把世界从<strong>一条线升成一个平面</strong>。</p>
   <p><strong>代码补给⑦（meshgrid 与切片向量化，本课最重）：</strong></p>
   <pre><code>X, Y = numpy.meshgrid(x, y)   # 两个一维 → 两张二维坐标网
-u[i, j]          # 第 i 行第 j 列；约定：i 对应 y，j 对应 x
+u[j, i]          # 第 j 行第 i 列；约定：j 对应 y（行），i 对应 x（列）
 
-# 双层循环 → 一行切片
-u[1:-1, 1:-1] = un[1:-1,1:-1] - un[1:-1,1:-1]*dt/dx*(un[1:-1,1:-1]-un[:-2,1:-1])</code></pre>
-  <p><strong>切片写法的关键：</strong>把"邻居"也整体平移一格——<code>un[i-1,j]</code> 对应全体平移后的 <code>un[:-2, 1:-1]</code>。因为每个元素同时扮演"自己"和"别人的邻居"两个角色。</p>
+# 双层循环 → 一行切片（以 x 方向对流为例）
+u[1:, 1:] = un[1:,1:] - un[1:,1:]*dt/dx*(un[1:,1:]-un[1:,:-1])</code></pre>
+  <p><strong>切片写法的关键：</strong>把"邻居"也整体平移一格——<code>un[j,i-1]</code> 对应全体平移后的 <code>un[1:, :-1]</code>。因为每个元素同时扮演"自己"和"别人的邻居"两个角色。</p>
   <p><strong>物理补给⑦（二维速度场）：</strong>一维只有一个 u；二维是<strong>两个分量</strong>——u（x 方向）和 v（y 方向）。<br>
   从这课开始要分清<strong>标量场</strong>（温度、压力，一个数）与<strong>向量场</strong>（速度，两个数）。</p>
 </div>
@@ -53,6 +53,16 @@ u[1:-1, 1:-1] = un[1:-1,1:-1] - un[1:-1,1:-1]*dt/dx*(un[1:-1,1:-1]-un[:-2,1:-1])
   </ul>
   与代码的关系：二维数组的下标约定 <code>u[j,i]</code>（第一次是 y、第二次是 x）直接对应"偏导在一个方向上一个方向地各算一次"。你写的 `u[j,i]-u[j,i-1]` 是对 $\partial_x u$ 的采样，另一项对 $\partial_y u$。
 </div>
+<h2>0 · 先别慌：难度集中在三件新事上（0006 同款拆解）</h2>
+<p>这是二维的门口，画面感变化最大——但<strong>方程层面没有任何新东西</strong>，还是你 0002 就会的那条对流。真正的新东西只有三件，按顺序拿下，不要并行：</p>
+<table>
+  <tr><th>新东西</th><th>属于哪一类</th><th>怎么拿下</th></tr>
+  <tr><td><code>[j, i]</code> 索引约定 + meshgrid</td><td>新写法（2D 阶段头号 Bug 源）</td><td>盯住 §1：行 j 对应 y、列 i 对应 x。meshgrid 只是给绘图发坐标，不参与求解</td></tr>
+  <tr><td>切片向量化</td><td>新写法（for 循环 → 整块赋值）</td><td>先跑通循环版对准公式，再逐段翻译切片版（§3 有逐段对照表）</td></tr>
+  <tr><td>耦合双场（u、v）</td><td>新物理（两个场互相搬运）</td><td>Step 6 才出现；把 u 方程看懂，v 方程是镜像复制</td></tr>
+</table>
+<p>⚠ 本课唯一要死记的是索引顺序——写错它，帽子会画成转置的。0008–0010 全部复用本课约定，这 10 分钟值得花。</p>
+
 <h2>1 · 二维的约定（本节最容易踩坑的地方）</h2>
 
 <p>二维就多一个下标。约定（钉死它，后面全用）：</p>
@@ -181,7 +191,7 @@ $$
 
 <h3>逐行注释：官方向量版核心</h3>
 
-<pre><code>nx = 101; ny = 101; nt = 80; c = 1
+<pre><code>nx = 101; ny = 101; nt = 80
 dx = 2/(nx-1); dy = 2/(ny-1); sigma = .2; dt = sigma*dx
 
 u = numpy.ones((ny,nx)); v = numpy.ones((ny,nx))
@@ -192,23 +202,28 @@ v[int(.5/dy):int(1/dy+1), int(.5/dx):int(1/dx+1)] = 2  # v 的帽子（初始相
 for n in range(nt + 1):
     un = u.copy(); vn = v.copy()      # 两场同时快照
 
-    # u 方程：非线性对流两方向
+    # u 方程：非线性对流两方向（没有 c：速度就是场自己）
     u[1:, 1:] = (un[1:, 1:] -
-                 (un[1:, 1:] * c * dt / dx * (un[1:, 1:] - un[1:, :-1])) -
-                  vn[1:, 1:] * c * dt / dy * (un[1:, 1:] - un[:-1, 1:]))
+                 (un[1:, 1:] * dt / dx * (un[1:, 1:] - un[1:, :-1])) -
+                  vn[1:, 1:] * dt / dy * (un[1:, 1:] - un[:-1, 1:]))
     # v 方程：结构完全相同，把被搬运的场换 v
     v[1:, 1:] = (vn[1:, 1:] -
-                 (un[1:, 1:] * c * dt / dx * (vn[1:, 1:] - vn[1:, :-1])) -
-                  vn[1:, 1:] * c * dt / dy * (vn[1:, 1:] - vn[:-1, 1:]))
+                 (un[1:, 1:] * dt / dx * (vn[1:, 1:] - vn[1:, :-1])) -
+                  vn[1:, 1:] * dt / dy * (vn[1:, 1:] - vn[:-1, 1:]))
 
     # 四个边界，u、v 都固定为 1
     u[0,:]=1; u[-1,:]=1; u[:,0]=1; u[:,-1]=1
     v[0,:]=1; v[-1,:]=1; v[:,0]=1; v[:,-1]=1</code></pre>
 
+<div class="box">
+<span class="box-title">⚠ 看不见 c 了——这不是漏写</span>
+对比 Step 5：那里系数是 <code>c*dt/dx</code>，这里只剩 <code>dt/dx</code>。因为非线性对流的速度就是场自己（0003 的结论）：x 方向被 un 自己搬运、y 方向被 vn 搬运，速度已经以乘数的身份站在式子里，再乘一个 c 就画蛇添足了。官方 Step 6 原码同样没有 c。默写时若多写了一个 c，说明线性版还没在脑子里切换成非线性版。
+</div>
+
 <table>
   <tr><th>行</th><th>对应公式</th><th>说明</th></tr>
-  <tr><td><code>un[1:,1:] * c*dt/dx * (un[1:,1:]-un[1:,:-1])</code></td><td>$u_{i,j}^n\frac{\Delta t}{\Delta x}(u_{i,j}^n-u_{i-1,j}^n)$</td><td>x 方向非线性对流（速度 = 当地 u）</td></tr>
-  <tr><td><code>vn[1:,1:] * c*dt/dy * (un[1:,1:]-un[:-1,1:])</code></td><td>$v_{i,j}^n\frac{\Delta t}{\Delta y}(u_{i,j}^n-u_{i,j-1}^n)$</td><td>y 方向非线性对流（速度 = 当地 v）</td></tr>
+  <tr><td><code>un[1:,1:] * dt/dx * (un[1:,1:]-un[1:,:-1])</code></td><td>$u_{i,j}^n\frac{\Delta t}{\Delta x}(u_{i,j}^n-u_{i-1,j}^n)$</td><td>x 方向非线性对流（速度 = 当地 u）</td></tr>
+  <tr><td><code>vn[1:,1:] * dt/dy * (un[1:,1:]-un[:-1,1:])</code></td><td>$v_{i,j}^n\frac{\Delta t}{\Delta y}(u_{i,j}^n-u_{i,j-1}^n)$</td><td>y 方向非线性对流（速度 = 当地 v）</td></tr>
   <tr><td>v 方程几乎复制粘贴</td><td>把上表三个 u 换成 v</td><td>耦合体现在：速度场仍用 un、vn</td></tr>
 </table>
 

@@ -25,9 +25,11 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   <p><strong>上一课你做到：</strong>升到了二维，学会用切片替代循环。→ <strong>这一课往前一步：</strong>在二维里把两种过程<strong>再组装一次</strong>。</p>
   <p><strong>代码补给⑧（broadcasting）：</strong>形状不同的数组做运算时，NumPy 自动把小的那个"扩"到匹配——所以一个标量能直接乘上整个数组，不用写循环。</p>
   <pre><code>u[1:-1,1:-1] = (un[1:-1,1:-1]
-                 - un[1:-1,1:-1]*dt/dx*(un[1:-1,1:-1]-un[:-2,1:-1])   # x 方向对流
-                 - un[1:-1,1:-1]*dt/dy*(un[1:-1,1:-1]-un[1:-1,:-2])   # y 方向对流
-                 + nu*dt/dx**2*(un[2:,1:-1]-2*un[1:-1,1:-1]+un[:-2,1:-1]))  # 扩散</code></pre>
+                - un[1:-1,1:-1]*dt/dx*(un[1:-1,1:-1]-un[1:-1,:-2])   # x 方向对流
+                - un[1:-1,1:-1]*dt/dy*(un[1:-1,1:-1]-un[:-2,1:-1])   # y 方向对流
+                + nu*dt/dx**2*(un[1:-1,2:]-2*un[1:-1,1:-1]+un[1:-1,:-2])   # x 方向扩散
+                + nu*dt/dy**2*(un[2:,1:-1]-2*un[1:-1,1:-1]+un[:-2,1:-1]))  # y 方向扩散</code></pre>
+  <p><strong>切片方向口诀：</strong>数组是 <code>[j, i]</code>——<strong>行 j 对应 y、列 i 对应 x</strong>。所以 <code>[1:-1,:-2]</code>（列上截短）才是 x 方向邻居；<code>[:-2,1:-1]</code>（行上截短）是 y 方向邻居。本课 §1 的代码与此完全一致，先在这里认熟。</p>
   <p><strong>物理补给⑧（二维拉普拉斯）：</strong>$\nabla^2=\partial_x^2+\partial_y^2$——两个方向各算一次再相加。<br>
   扩散是<strong>各向同性</strong>的：它没有偏爱方向，所以用的是中心差分（对称），而不是对流那种有方向的迎风格式。</p>
 </div>
@@ -207,7 +209,7 @@ Barba &amp; Forsyth, <em>CFD Python</em>, Step 7（09）/ Step 8（10）。配�
   <div class="nav">
     <span><a href="0007-step5-6-2d-convection.html">← 0007 Step 5+6</a></span>
     <span><a href="../reference/glossary.html">术语表</a></span>
-    <span>下一课：0009 · Step 9+10 Laplace 与 Poisson</span>
+    <span>下一课：FDTD 1D（插队主线 · 课页待生成）→ 之后 0009 · Step 9+10 Laplace 与 Poisson</span>
   </div>
   <p>CFDPython 双轨课程 · 第 0008 课 · 2026-09-11</p>
 </footer>

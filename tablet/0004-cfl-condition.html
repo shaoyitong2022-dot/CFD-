@@ -415,6 +415,38 @@ def linearconv(nx):
 注意官方提示：网格越密，冒出来的帽形<strong>整体移动得越短</strong>。为什么？<code>nt</code> 固定是 20，但 $dt$ 随 $dx$ 变小了 → 总模拟时长 $nt\cdot dt$ 也变小 → 波走得总距离变短，这是"模拟更短的时间"而"不是"波变慢了。这是网格收敛讨论里的常客，后面步进 2D 时会再次相见。
 </div>
 
+<h3>◆ 数学兑现：von Neumann 放大因子（0002 承诺的"严格证明"）</h3>
+
+<p>0002 两次说"0004 会从数学上严格证明稳定性"。现在兑现。方法叫 <strong>von Neumann 分析</strong>——显式格式稳定性分析的标配工具，之后推 FDTD 的 Courant 条件用的还是它。</p>
+
+<p><strong>思路</strong>：把数值解拆成一堆平面波 $u_i^n = G^n e^{\mathrm{i}k x_i}$（$k$ 是波数，$\mathrm{i}^2=-1$）。差分格式是线性的，每根平面波各自独立演化；只要每一根都不随步数 $n$ 增大（$|G|\le1$），整个解就稳定。$G$ 叫<strong>放大因子</strong>——每推一步，这根波被乘几倍。</p>
+
+<p><strong>代入迎风更新公式</strong> $u_i^{n+1}=u_i^n-\sigma\,(u_i^n-u_{i-1}^n)$（$\sigma=c\Delta t/\Delta x$），约掉公共因子 $G^n e^{\mathrm{i}kx_i}$：</p>
+
+$$
+G = 1-\sigma\left(1-e^{-\mathrm{i}k\Delta x}\right) = \underbrace{1-\sigma(1-\cos\theta)}_{\text{实部}}-\mathrm{i}\,\sigma\sin\theta,\qquad \theta \equiv k\Delta x
+$$
+
+<p><strong>取模方</strong>（实部平方加虚部平方，用 $\sin^2\theta=(1-\cos\theta)(1+\cos\theta)$ 化简）：</p>
+
+$$
+|G|^2 \;=\; 1 \;-\; 2\,\sigma(1-\sigma)\,(1-\cos\theta)
+$$
+
+<p><strong>读这一行，稳定性全在里面</strong>：</p>
+
+<ul>
+  <li>要 $|G|\le1$，充要条件是 $\sigma(1-\sigma)\ge0$，即 <strong>$0\le\sigma\le1$</strong>——这就是前面物理直觉猜出的 CFL 判据的严格版本。</li>
+  <li>耗散强度正比于 $\sigma(1-\sigma)$：在 $\sigma=\tfrac12$ 处最狠，$\sigma\to1$ 趋于零。<strong>$\sigma=1$ 时 $|G|=1$，振幅一点都不掉</strong>——更新公式恰好退化成 $u_i^{n+1}=u_{i-1}^n$，波形整体精确平移一格。</li>
+</ul>
+
+<div class="box">
+<span class="box-title">◆ 回头验收 0002 实验 5 的实测数</span>
+0002 实测 25 步后帽顶：$C=0.5$ 掉到 1.9710、$C=0.9$ 几乎不掉（2.0000）。当时只是"看图说话"，现在 $|G|^2$ 公式直接预言了这个排序：<strong>耗散在 $\sigma=1/2$ 附近最狠、$\sigma\to1$ 归零</strong>。补测中间点（2026-09-26，本机实跑）：$C=0.75$ 帽顶 1.9896，恰好落在两者之间——$\sigma(1-\sigma)$ 曲线被三个实测点钉死。数值耗散不是玄学，是放大因子里的 $-\sigma(1-\sigma)$ 项。
+</div>
+
+<p>⚠ 一句边界：这个推导只对<strong>线性、常系数</strong>方程严格成立。Step 2 的非线性方程只能借用结论、拿 $u_{\max}$ 当"最坏波速"（0006 的 $\sigma_c=u_{\max}\nu$ 就是这么用的）。非线性稳定性理论超出本课，MIT 18.086 L02–L03 是下一站。</p>
+
 <h2>5 · 检查点：闭卷自测</h2>
 
 <details class="quiz"><summary>Q1 · 写出 Courant 数定义，以及一维迎风显式格式的稳定性判据。</summary>

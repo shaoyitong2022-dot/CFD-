@@ -26,7 +26,7 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   <p><strong>代码补给⑭（复用）：</strong>本课要把 A 轨写的 FDM 求解器<strong>拿来直接用</strong>。<br>
   这就是先学 A 轨的意义：<strong>没有那个基准，你无法判断 PINN 到底好不好</strong>。</p>
   <p><strong>物理补给（两种误差不是一回事）：</strong><br>
-  · <strong>FDM 的误差 = 截断误差</strong>（$O(\Delta t^2)$），可以预测、可以靠加密网格系统性降低；<br>
+  · <strong>FDM 的误差 = 截断误差</strong>（前向 Euler 的全局误差是 $O(\Delta t)$，见 §2），可以预测、可以靠加密网格系统性降低；<br>
   · <strong>PINN 的误差 = 优化误差</strong>，来自非凸优化，<strong>不可预测</strong>，也不随网格加密而收敛。<br>
   看清这个差别，你就知道该在什么场合用谁——这是本课的真正收获，比那张图更值钱。</p>
 </div>
@@ -44,7 +44,7 @@ MathJax = { tex: { inlineMath: [['$', '$']] } };
   <span class="box-title">◆ 物理补强｜本课会用到的基石（对比直觉补充）</span>
   收官对比课，补"怎样公平地比较两条解法"的三条直觉：
   <ul>
-    <li><strong>误差来源不同，才能说明角色分工</strong>：FDM 的误差来自<strong>截断误差</strong>（差分近似丢掉了 $O(\Delta t^2)$ 等高阶项），加密网格会变小；PINN 的误差来自<strong>优化误差</strong>（训练没有收敛到真解），调参/多跑种子会变小。两者不是同一个东西。</li>
+    <li><strong>误差来源不同，才能说明角色分工</strong>：FDM 的误差来自<strong>截断误差</strong>（差分近似丢掉了高阶项——每步局部误差 $O(\Delta t^2)$，累积成全局误差 $O(\Delta t)$，所以"步长减半、误差约减半"），加密网格会变小；PINN 的误差来自<strong>优化误差</strong>（训练没有收敛到真解），调参/多跑种子会变小。两者不是同一个东西。</li>
     <li><strong>解析解是唯一"绝对裁判"</strong>：真实流动多数没有解析解，而这里振子有，所以能把三条线贴在同一张图上验收。什么时候该信 FDM、什么时候该信 PINN，都靠这条"金标准"校准。</li>
     <li><strong>量纲分析 / 参数一致性</strong>：给两个求解器喂<strong>同一个方程、同一组参数</strong>才公平。画对比图前先确认 dt、参数、区间在两条路里对得上，否则对比结果没有意义。</li>
   </ul>

@@ -54,7 +54,7 @@ def pressure_poisson(p, dx, dy, b): ...          # 压力迭代</code></pre>
     <li><strong>雷诺数定位流动状态</strong>：$\mathrm{Re}=\frac{\rho U L}{\mu}=\frac{UL}{\nu}$（$U$ 特征速度、$L$ 特征尺度）。Re 小=黏性占优→平稳层流；Re 大=惯性占优→不稳定、湍流。腔流/通道流都是层流的入门对象。</li>
     <li><strong>简单剪切流的关键形象</strong>：腔流（lid-driven）是盖子拖动物体底部产生剪切，速度从顶板的 $u=\text{const}$ 渐变到底板的 0；通道流靠压力梯度驱动。看到"由边界/压力拖动的剪切"就理解了这类流动。</li>
   </ul>
-  与代码的关系：动量方程离散后得到"候选速度"（uv），因为它不一定无源；压力泊松方程（用 0009 的迭代法）求出 $p$，再用 $p$ 修正速度，让它满足 $\nabla\cdot\vec u=0$——这就是课里"投影法"代法的由来。
+  与代码的关系：动量方程离散后得到"候选速度"（中间场 $\vec u^{\,*}$），因为它不一定无源；压力泊松方程（用 0009 的迭代法）求出 $p$，再用 $p$ 修正速度，让它满足 $\nabla\cdot\vec u=0$——这就是"投影法"（projection method）的由来。
 </div>
 <h2>1 · 我们在解什么：不可压 NS 的三条方程</h2>
 
@@ -80,6 +80,21 @@ $$
 不可压意味着 $\nabla\cdot\vec{v}=0$ 是<strong>运动学约束</strong>而不是演化方程。压力的作用就是"时刻调整速度场，让散度为零"。把对动量方程取散度，才得到压力泊松方程（第三步）——这正是 0009 预告的用途。物理直觉：流场要"无源无汇"，压力像一只隐形的手，在每个格点按需要的量推挤流体，保证既不堆积也不真空。
 </div>
 
+<div class="box">
+<span class="box-title">◆ 把第三条方程真正推出来（三步，合书能默写才算过）</span>
+<p><strong>第 1 步：动量方程取散度。</strong>对 u 方程取 $\partial_x$、对 v 方程取 $\partial_y$，相加（散度是线性算子）：</p>
+$$\frac{\partial}{\partial t}(\nabla\cdot\vec u) + \nabla\cdot\left[(\vec u\cdot\nabla)\vec u\right] = -\frac{1}{\rho}\nabla^2 p + \nu\,\nabla^2(\nabla\cdot\vec u)$$
+<p><strong>第 2 步：不可压干掉两项、时间导离散。</strong>要求下一时刻 $\nabla\cdot\vec u=0$，黏性项里的 $\nabla^2(\nabla\cdot\vec u)$ 同样归零；时间导用当前场离散：$\partial_t(\nabla\cdot\vec u)\approx -\dfrac{1}{\Delta t}\nabla\cdot\vec u^{\,*}$（$\vec u^{\,*}$ 是动量推进出的中间速度）。整理：</p>
+$$\nabla^2 p \;=\; \rho\left[\frac{1}{\Delta t}\nabla\cdot\vec u^{\,*} \;-\; \nabla\cdot\left[(\vec u^{\,*}\cdot\nabla)\vec u^{\,*}\right]\right]$$
+<p><strong>第 3 步：展开非线性项，散度约束再杀两项。</strong>二维直接展开：</p>
+$$\nabla\cdot[(\vec u\cdot\nabla)\vec u] = \underbrace{\left(\tfrac{\partial u}{\partial x}\right)^2 + 2\tfrac{\partial u}{\partial y}\tfrac{\partial v}{\partial x} + \left(\tfrac{\partial v}{\partial y}\right)^2}_{\text{留下}} \;+\; u\underbrace{\left(\partial_{xx}u+\partial_{xy}v\right)}_{=\,\partial_x(\nabla\cdot\vec u)\,=\,0} \;+\; v\underbrace{\left(\partial_{yx}u+\partial_{yy}v\right)}_{=\,\partial_y(\nabla\cdot\vec u)\,=\,0}$$
+<p>中间那对 2 来自 $u_y v_x$ 与 $v_x u_y$ 是同一对乘积的两次出现。合起来：</p>
+$$\nabla^2 p = -\rho\left[\left(\frac{\partial u}{\partial x}\right)^2 + 2\frac{\partial u}{\partial y}\frac{\partial v}{\partial x} + \left(\frac{\partial v}{\partial y}\right)^2\right]$$
+<p>——这正是第三条方程。<strong>代码里的 <code>build_up_b</code> 就是它的离散版</strong>，逐项对照：</p>
+$$b = \rho\left[\underbrace{\frac{1}{\Delta t}\left(\frac{\partial u}{\partial x}+\frac{\partial v}{\partial y}\right)}_{\text{第 2 步的时间导项}} \;-\; \underbrace{\left(\frac{\partial u}{\partial x}\right)^2 - 2\frac{\partial u}{\partial y}\frac{\partial v}{\partial x} - \left(\frac{\partial v}{\partial y}\right)^2}_{\text{第 3 步的展开（差分离散）}}\right]$$
+<p>ⓘ 多出来的 $\frac{1}{\Delta t}\nabla\cdot\vec u$ 项就是"当前场离不可压还差多少"的度量——它每一步都在变，所以<strong>压力每步都要重解</strong>（0009 的迭代机器因此每步重启）。检查点 Q2 问的就是这一项。</p>
+</div>
+
 <p>教学建议（官方原话）：把上面三条方程<strong>手抄一遍</strong>，逐项对照 —— 每条项你都在 0003/0005/0007/0009 见过。</p>
 
 <h2>2 · 求解节奏（每一大时间步做两件事）</h2>
@@ -94,7 +109,7 @@ $$
 
 <h2>3 · 逐行注释：官方三函数</h2>
 
-<h3>3.1 build_up_b：右侧那坨碎装腔</h3>
+<h3>3.1 build_up_b：压力泊松的右端项</h3>
 
 <pre><code>def build_up_b(b, rho, dt, u, v, dx, dy):
     # b 是压力泊松的"右端项"（公式第三行的括号内容×ρ）
@@ -130,7 +145,7 @@ $$
 
 <div class="box">
 <span class="box-title">◆ 为什么叫"填充压力泊松"？</span>
-压力没有时间传播公式，要反复解泊松让它满足 $\nabla\cdot\vec{v}=0$。每步把 b（由当前速度算出）右端代入，迭代 50 次逼近一致。这个"0 阶精度 x 多次迭代"是腔流教学的标准折中。
+压力没有时间传播公式，要反复解泊松让它满足 $\nabla\cdot\vec{v}=0$。每步把 b（由当前速度算出）右端代入，迭代 50 次逼近一致。nit=50 的子迭代是"精度换时间"的标准折中：泊松没解到完全收敛，散度只被压到近似为零——想提精度，第一个旋钮就是调大 nit。
 </div>
 
 <h3>3.3 cavity_flow：组装动量更新</h3>
@@ -228,14 +243,14 @@ $$\text{u 方程} + F,\qquad \text{边界：}u(0)=u(2),\ v(0)=v(2),\ u,v=0\ @\ y
 <div class="box">
 <span class="box-title">◆ 一手来源</span>
 Barba &amp; Forsyth, <em>CFD Python</em>, Step 11（14）/ Step 12（15）。配套视频：<strong>Video Lesson 9</strong>（CFL 严谨分析，回顾稳定）：<a href="https://youtu.be/Yw1YPBupZxU">youtube</a>；官方课程 Piazza 资源：<a href="https://piazza.com/bu/spring2013/me702/resources">Spring 2013 ME702</a>。<br>
-下一课起进入 <strong>Phase B · 谐振子 PINN</strong>（PyTorch 轨道）。
+按 2026-09-21 排期变更，下一课先插队 FDTD 冷等离子体（等光学课讲到电磁波色散，约 11 月）；Phase B 谐振子 PINN（0011–0015）后移寒假。
 </div>
 
 <footer class="lesson-foot">
   <div class="nav">
     <span><a href="0009-step9-10-laplace-poisson.html">← 0009 Step 9+10</a></span>
     <span><a href="../reference/glossary.html">术语表</a></span>
-    <span>下一课：0011 · Phase B B1 谐振子 PINN 概念课</span>
+    <span>下一课：FDTD 冷等离子体（等光学课色散，约 11 月）· Phase B PINN 后移寒假（0011–0015 保留）</span>
   </div>
   <p>CFDPython 双轨课程 · 第 0010 课 · 2026-09-11</p>
 </footer>

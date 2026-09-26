@@ -167,7 +167,12 @@ for i in range(1000):                         # 训练 1000 步
 
 <h2>5 · 必做实验（对照 B1 的预测）</h2>
 
-<p><strong>实验 1</strong>：从头手打上述全部代码并跑通。确认结果：橙色训练点附近蓝色预测线和解析解（灰色）几乎重合；**在数据区外（t&gt;0.4）两条线分道扬镳**。这是"裸 NN 只会插值"的实证。</p>
+<p><strong>实验 1</strong>：从头手打上述全部代码并跑通。确认结果：橙色训练点附近蓝色预测线和解析解（灰色）几乎重合；<strong>在数据区外（t&gt;0.4）两条线分道扬镳</strong>。这是"裸 NN 只会插值"的实证。训练循环本身不含画图，跑完后补这几行才有"蓝线 vs 灰线"：</p>
+<pre><code>yh = model(x)  # 全域 500 点上前向一遍
+plt.plot(x, yh, color="tab:blue", lw=2, label="Neural network prediction")  # 蓝线：网络预测
+plt.plot(x, y, color="grey", lw=2, label="Exact solution")                   # 灰线：解析解
+plt.scatter(x_data, y_data, color="tab:orange", label="Training data")
+plt.legend()</code></pre>
 
 <p><strong>实验 2（加深理解）</strong>：把训练步数 1000 改成 5000，观察"更努力训练"能否让网络在区间外也学对？（预期：仍不行——不是训练不够的问题，是<strong>没有物理约束</strong>。）</p>
 
